@@ -1,0 +1,30 @@
+# ---- Java ----
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# ---- IDE ----
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# ---- Node ----
+node_modules/
+dist/
+uniapp/unpackage/
+miniapp-tmp/
+
+# ---- 日志 ----
+*.log
+logs/
+
+# ---- 环境/密钥（不入库）----
+*.pem
+*.key
+.env.local
+application-local.yml
+
+# ---- 上传文件 ----
+server/upload/

@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:minimall}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:minimall}
+    password: ${MYSQL_PASSWORD:minimall123}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: 0
+      password: ${REDIS_PASSWORD:}
+
+# Sa-Token 与 Redis 共用
+sa-token:
+  jwt-secret-key: changeme-minimall-secret-for-p0
+
+# 文件上传本地目录
+minimall:
+  upload-dir: ./upload
+  file-domain: http://localhost:8080/file
