@@ -30,6 +30,9 @@
       <view class="menu-item" @click="go('/pages/coupon/center')">领券中心</view>
       <view class="menu-item" @click="go('/pages/integral/list')">积分商城</view>
       <view class="menu-item" @click="go('/pages/seckill/list')">限时秒杀</view>
+      <view class="menu-item" @click="go('/pages/team/list')">我的拼团</view>
+      <view class="menu-item" @click="go('/pages/bargain/list')">我的砍价</view>
+      <view class="menu-item" @click="go('/pages/presell/list')">预售专区</view>
       <view class="menu-item" @click="go('/pages/sign/sign')">每日签到</view>
     </view>
 

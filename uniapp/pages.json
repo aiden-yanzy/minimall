@@ -63,6 +63,18 @@
     {
       "path": "pages/seckill/list",
       "style": { "navigationBarTitleText": "限时秒杀" }
+    },
+    {
+      "path": "pages/team/list",
+      "style": { "navigationBarTitleText": "拼团" }
+    },
+    {
+      "path": "pages/bargain/list",
+      "style": { "navigationBarTitleText": "砍价" }
+    },
+    {
+      "path": "pages/presell/list",
+      "style": { "navigationBarTitleText": "预售" }
     }
   ],
   "globalStyle": {
