@@ -20,6 +20,12 @@ const router = createRouter({
           name: 'dashboard',
           component: () => import('@/views/dashboard/index.vue'),
           meta: { title: '工作台' }
+        },
+        {
+          path: 'goods',
+          name: 'goods',
+          component: () => import('@/views/goods/list.vue'),
+          meta: { title: '商品管理' }
         }
       ]
     }

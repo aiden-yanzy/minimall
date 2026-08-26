@@ -459,4 +459,24 @@ INSERT INTO `express` (`name`, `code`, `sort`, `is_show`) VALUES
 ('中通快递', 'ZTO', 3, 1),
 ('韵达快递', 'YD', 4, 1);
 
+-- 演示分类/商品（P1 验收数据，可选）
+INSERT INTO `goods_category` (`name`, `pid`, `level`, `sort`, `is_show`) VALUES
+('数码', 0, 1, 1, 1),
+('服饰', 0, 1, 2, 1);
+
+INSERT INTO `goods`
+(`id`, `name`, `subtitle`, `category_id`, `image`, `market_price`, `min_price`, `max_price`, `stock`, `sales`, `content`, `spec_type`, `status`, `is_show`, `sort`, `refund_type`)
+VALUES
+(1, '无线蓝牙耳机 Pro', '主动降噪 长续航', 1, '/file/demo/hp.png', 39900, 29900, 32900, 150, 0, '<p>高性价比蓝牙耳机</p>', 0, 1, 1, 1, 1);
+
+INSERT INTO `goods_item`
+(`goods_id`, `item_sn`, `price`, `cost_price`, `market_price`, `stock`, `spec_value_ids`, `spec_value_str`, `status`)
+VALUES
+(1, 'DEMO-001', 29900, 15000, 39900, 100, '1', '黑色', 1),
+(1, 'DEMO-002', 32900, 16000, 42900, 50, '2', '白色', 1);
+
+INSERT INTO `goods_image` (`goods_id`, `url`, `sort`) VALUES
+(1, '/file/demo/hp1.png', 0),
+(1, '/file/demo/hp2.png', 1);
+
 SET FOREIGN_KEY_CHECKS = 1;

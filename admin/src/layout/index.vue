@@ -7,6 +7,10 @@
           <el-icon><DataBoard /></el-icon>
           <span>工作台</span>
         </el-menu-item>
+        <el-menu-item index="/goods">
+          <el-icon><Goods /></el-icon>
+          <span>商品管理</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
@@ -31,7 +35,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataBoard } from '@element-plus/icons-vue'
+import { DataBoard, Goods } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/store/auth'
 
 const route = useRoute()
