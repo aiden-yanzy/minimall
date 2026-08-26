@@ -44,6 +44,12 @@ const router = createRouter({
           name: 'marketing',
           component: () => import('@/views/marketing/index.vue'),
           meta: { title: '营销管理' }
+        },
+        {
+          path: 'integral',
+          name: 'integral',
+          component: () => import('@/views/integral/index.vue'),
+          meta: { title: '积分商城' }
         }
       ]
     }

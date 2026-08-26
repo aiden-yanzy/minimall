@@ -23,6 +23,10 @@
           <el-icon><Present /></el-icon>
           <span>营销管理</span>
         </el-menu-item>
+        <el-menu-item index="/integral">
+          <el-icon><Present /></el-icon>
+          <span>积分商城</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>

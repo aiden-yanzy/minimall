@@ -43,6 +43,22 @@
     {
       "path": "pages/coupon/mine",
       "style": { "navigationBarTitleText": "我的优惠券" }
+    },
+    {
+      "path": "pages/integral/list",
+      "style": { "navigationBarTitleText": "积分商城" }
+    },
+    {
+      "path": "pages/integral/exchange",
+      "style": { "navigationBarTitleText": "兑换" }
+    },
+    {
+      "path": "pages/integral/orders",
+      "style": { "navigationBarTitleText": "兑换订单" }
+    },
+    {
+      "path": "pages/sign/sign",
+      "style": { "navigationBarTitleText": "每日签到" }
     }
   ],
   "globalStyle": {

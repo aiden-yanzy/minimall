@@ -511,6 +511,80 @@ INSERT INTO `coupon` (`name`, `type`, `scope`, `threshold`, `discount_value`, `t
 INSERT INTO `full_reduction` (`name`, `threshold`, `reduce`, `status`) VALUES
 ('全场满200减20', 20000, 2000, 1);
 
+-- --------------------------------------------
+-- 7. 积分商城 + 签到 (P4-a)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `integral_goods`;
+CREATE TABLE `integral_goods` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name`        VARCHAR(128) NOT NULL,
+  `image`       VARCHAR(255) NOT NULL DEFAULT '',
+  `integral`    BIGINT NOT NULL DEFAULT 0 COMMENT '兑换所需积分',
+  `stock`       INT NOT NULL DEFAULT 0,
+  `sales`       INT NOT NULL DEFAULT 0,
+  `status`      TINYINT NOT NULL DEFAULT 1 COMMENT '1上架 0下架',
+  `description` TEXT,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `delete_flag` TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='积分商品';
+
+DROP TABLE IF EXISTS `integral_order`;
+CREATE TABLE `integral_order` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `order_sn`    VARCHAR(32) NOT NULL,
+  `user_id`     BIGINT NOT NULL,
+  `integral_goods_id` BIGINT NOT NULL,
+  `goods_name`  VARCHAR(128) NOT NULL,
+  `goods_image` VARCHAR(255) NOT NULL DEFAULT '',
+  `integral`    BIGINT NOT NULL DEFAULT 0 COMMENT '单价积分',
+  `num`         INT NOT NULL DEFAULT 1,
+  `total_integral` BIGINT NOT NULL DEFAULT 0 COMMENT '合计积分',
+  `status`      TINYINT NOT NULL DEFAULT 0 COMMENT '0待发货 1已发货 2已完成',
+  `contact`     VARCHAR(32) NOT NULL DEFAULT '',
+  `mobile`      VARCHAR(20) NOT NULL DEFAULT '',
+  `address`     VARCHAR(255) NOT NULL DEFAULT '',
+  `express_name` VARCHAR(32) NOT NULL DEFAULT '',
+  `express_no`  VARCHAR(64) NOT NULL DEFAULT '',
+  `express_time` DATETIME NULL,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `delete_flag` TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_order_sn` (`order_sn`),
+  KEY `idx_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='积分兑换订单';
+
+DROP TABLE IF EXISTS `sign_daily`;
+CREATE TABLE `sign_daily` (
+  `id`               BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `integral`         INT NOT NULL DEFAULT 5 COMMENT '单日签到积分',
+  `continuous_days`  INT NOT NULL DEFAULT 7 COMMENT '连续天数阈值',
+  `continuous_reward` INT NOT NULL DEFAULT 10 COMMENT '连续达标额外积分',
+  `status`           TINYINT NOT NULL DEFAULT 1,
+  `create_time`      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time`      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `delete_flag`      TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='每日签到配置';
+
+DROP TABLE IF EXISTS `sign_log`;
+CREATE TABLE `sign_log` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id`     BIGINT NOT NULL,
+  `sign_date`   DATE NOT NULL,
+  `integral`    INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_date` (`user_id`, `sign_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='签到记录';
+
+-- 演示数据
+INSERT INTO `sign_daily` (`integral`, `continuous_days`, `continuous_reward`) VALUES (5, 7, 10);
+INSERT INTO `integral_goods` (`name`, `image`, `integral`, `stock`, `status`, `description`) VALUES
+('限定帆布袋', '/file/demo/bag.png', 500, 50, 1, '环保材质 限量兑换'),
+('品牌雨伞', '/file/demo/umbrella.png', 800, 30, 1, '晴雨两用');
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
