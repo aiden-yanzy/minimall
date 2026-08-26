@@ -56,6 +56,12 @@ const router = createRouter({
           name: 'seckill',
           component: () => import('@/views/seckill/index.vue'),
           meta: { title: '秒杀管理' }
+        },
+        {
+          path: 'wallet',
+          name: 'wallet',
+          component: () => import('@/views/wallet/index.vue'),
+          meta: { title: '提现审核' }
         }
       ]
     }

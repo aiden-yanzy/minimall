@@ -31,6 +31,10 @@
           <el-icon><Present /></el-icon>
           <span>秒杀管理</span>
         </el-menu-item>
+        <el-menu-item index="/wallet">
+          <el-icon><Present /></el-icon>
+          <span>提现审核</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>

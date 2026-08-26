@@ -2,79 +2,123 @@
   "pages": [
     {
       "path": "pages/index/index",
-      "style": { "navigationBarTitleText": "Minimall 商城" }
+      "style": {
+        "navigationBarTitleText": "Minimall 商城"
+      }
     },
     {
       "path": "pages/goods/list",
-      "style": { "navigationBarTitleText": "分类" }
+      "style": {
+        "navigationBarTitleText": "分类"
+      }
     },
     {
       "path": "pages/goods/detail",
-      "style": { "navigationBarTitleText": "商品详情" }
+      "style": {
+        "navigationBarTitleText": "商品详情"
+      }
     },
     {
       "path": "pages/cart/cart",
-      "style": { "navigationBarTitleText": "购物车" }
+      "style": {
+        "navigationBarTitleText": "购物车"
+      }
     },
     {
       "path": "pages/order/confirm",
-      "style": { "navigationBarTitleText": "确认订单" }
+      "style": {
+        "navigationBarTitleText": "确认订单"
+      }
     },
     {
       "path": "pages/order/list",
-      "style": { "navigationBarTitleText": "我的订单" }
+      "style": {
+        "navigationBarTitleText": "我的订单"
+      }
     },
     {
       "path": "pages/order/detail",
-      "style": { "navigationBarTitleText": "订单详情" }
+      "style": {
+        "navigationBarTitleText": "订单详情"
+      }
     },
     {
       "path": "pages/user/mine",
-      "style": { "navigationBarTitleText": "我的" }
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
     },
     {
       "path": "pages/user/login",
-      "style": { "navigationBarTitleText": "登录" }
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
     },
     {
       "path": "pages/coupon/center",
-      "style": { "navigationBarTitleText": "领券中心" }
+      "style": {
+        "navigationBarTitleText": "领券中心"
+      }
     },
     {
       "path": "pages/coupon/mine",
-      "style": { "navigationBarTitleText": "我的优惠券" }
+      "style": {
+        "navigationBarTitleText": "我的优惠券"
+      }
     },
     {
       "path": "pages/integral/list",
-      "style": { "navigationBarTitleText": "积分商城" }
+      "style": {
+        "navigationBarTitleText": "积分商城"
+      }
     },
     {
       "path": "pages/integral/exchange",
-      "style": { "navigationBarTitleText": "兑换" }
+      "style": {
+        "navigationBarTitleText": "兑换"
+      }
     },
     {
       "path": "pages/integral/orders",
-      "style": { "navigationBarTitleText": "兑换订单" }
+      "style": {
+        "navigationBarTitleText": "兑换订单"
+      }
     },
     {
       "path": "pages/sign/sign",
-      "style": { "navigationBarTitleText": "每日签到" }
+      "style": {
+        "navigationBarTitleText": "每日签到"
+      }
     },
     {
       "path": "pages/seckill/list",
-      "style": { "navigationBarTitleText": "限时秒杀" }
+      "style": {
+        "navigationBarTitleText": "限时秒杀"
+      }
     },
     {
       "path": "pages/team/list",
-      "style": { "navigationBarTitleText": "拼团" }
+      "style": {
+        "navigationBarTitleText": "拼团"
+      }
     },
     {
       "path": "pages/bargain/list",
-      "style": { "navigationBarTitleText": "砍价" }
+      "style": {
+        "navigationBarTitleText": "砍价"
+      }
     },
     {
       "path": "pages/presell/list",
-      "style": { "navigationBarTitleText": "预售" }
+      "style": {
+        "navigationBarTitleText": "预售"
+      }
+    },
+    {
+      "path": "pages/wallet/wallet",
+      "style": {
+        "navigationBarTitleText": "我的钱包"
+      }
     }
   ],
   "globalStyle": {
@@ -89,10 +133,22 @@
     "backgroundColor": "#FFFFFF",
     "borderStyle": "black",
     "list": [
-      { "pagePath": "pages/index/index", "text": "首页" },
-      { "pagePath": "pages/goods/list", "text": "分类" },
-      { "pagePath": "pages/cart/cart", "text": "购物车" },
-      { "pagePath": "pages/user/mine", "text": "我的" }
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/goods/list",
+        "text": "分类"
+      },
+      {
+        "pagePath": "pages/cart/cart",
+        "text": "购物车"
+      },
+      {
+        "pagePath": "pages/user/mine",
+        "text": "我的"
+      }
     ]
   }
 }
