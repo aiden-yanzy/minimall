@@ -627,6 +627,162 @@ VALUES ('今日秒杀', CURDATE(), DATE_ADD(CURDATE(), INTERVAL 1 DAY), 1, 1);
 INSERT INTO `seckill_goods` (`activity_id`, `goods_id`, `goods_item_id`, `seckill_price`, `seckill_stock`, `per_limit`, `sort`)
 VALUES (1, 1, 1, 19900, 20, 1, 1);
 
+-- --------------------------------------------
+-- 9. 拼团 (P5)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `team_activity`;
+CREATE TABLE `team_activity` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name`        VARCHAR(64) NOT NULL,
+  `goods_id`    BIGINT NOT NULL,
+  `goods_item_id` BIGINT NOT NULL,
+  `team_price`  BIGINT NOT NULL COMMENT '拼团价(分)',
+  `team_num`    INT NOT NULL DEFAULT 2 COMMENT '成团人数',
+  `per_limit`   INT NOT NULL DEFAULT 1 COMMENT '每人限购',
+  `start_time`  DATETIME NOT NULL,
+  `end_time`    DATETIME NOT NULL,
+  `status`      TINYINT NOT NULL DEFAULT 1,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `delete_flag` TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='拼团活动';
+
+DROP TABLE IF EXISTS `team_found`;
+CREATE TABLE `team_found` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `activity_id` BIGINT NOT NULL,
+  `user_id`     BIGINT NOT NULL COMMENT '团长',
+  `order_id`    BIGINT NOT NULL,
+  `status`      TINYINT NOT NULL DEFAULT 0 COMMENT '0拼团中 1成功 2失败',
+  `success_time` DATETIME NULL,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_activity` (`activity_id`, `status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='拼团-团';
+
+DROP TABLE IF EXISTS `team_join`;
+CREATE TABLE `team_join` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `found_id`    BIGINT NOT NULL,
+  `activity_id` BIGINT NOT NULL,
+  `user_id`     BIGINT NOT NULL,
+  `order_id`    BIGINT NOT NULL,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_order` (`order_id`),
+  KEY `idx_found` (`found_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='拼团-参团记录';
+
+-- --------------------------------------------
+-- 10. 砍价 (P5)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `bargain_activity`;
+CREATE TABLE `bargain_activity` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name`        VARCHAR(64) NOT NULL,
+  `goods_id`    BIGINT NOT NULL,
+  `goods_item_id` BIGINT NOT NULL,
+  `base_price`  BIGINT NOT NULL COMMENT '原价',
+  `floor_price` BIGINT NOT NULL COMMENT '底价',
+  `help_num`    INT NOT NULL DEFAULT 3 COMMENT '需帮砍人数',
+  `start_time`  DATETIME NOT NULL,
+  `end_time`    DATETIME NOT NULL,
+  `status`      TINYINT NOT NULL DEFAULT 1,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `delete_flag` TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='砍价活动';
+
+DROP TABLE IF EXISTS `bargain_initiate`;
+CREATE TABLE `bargain_initiate` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `activity_id` BIGINT NOT NULL,
+  `user_id`     BIGINT NOT NULL,
+  `current_price` BIGINT NOT NULL,
+  `helped_count` INT NOT NULL DEFAULT 0,
+  `status`      TINYINT NOT NULL DEFAULT 0 COMMENT '0进行中 1已成交 2已过期',
+  `order_id`    BIGINT NULL,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='砍价-发起';
+
+DROP TABLE IF EXISTS `bargain_help`;
+CREATE TABLE `bargain_help` (
+  `id`              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `initiate_id`     BIGINT NOT NULL,
+  `helper_user_id`  BIGINT NOT NULL,
+  `reduce_amount`   BIGINT NOT NULL DEFAULT 0,
+  `create_time`     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_initiate_helper` (`initiate_id`, `helper_user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='砍价-帮砍';
+
+-- --------------------------------------------
+-- 11. 预售 (P5)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `presell_activity`;
+CREATE TABLE `presell_activity` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name`        VARCHAR(64) NOT NULL,
+  `goods_id`    BIGINT NOT NULL,
+  `goods_item_id` BIGINT NOT NULL,
+  `deposit`     BIGINT NOT NULL COMMENT '定金(分)',
+  `final_price` BIGINT NOT NULL COMMENT '尾款(分)',
+  `stock`       INT NOT NULL DEFAULT 0,
+  `sales`       INT NOT NULL DEFAULT 0,
+  `start_time`  DATETIME NOT NULL,
+  `end_time`    DATETIME NOT NULL,
+  `final_end_time` DATETIME NOT NULL COMMENT '尾款支付截止',
+  `status`      TINYINT NOT NULL DEFAULT 1,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `delete_flag` TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='预售活动';
+
+DROP TABLE IF EXISTS `presell_order`;
+CREATE TABLE `presell_order` (
+  `id`             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `order_sn`       VARCHAR(32) NOT NULL,
+  `user_id`        BIGINT NOT NULL,
+  `activity_id`    BIGINT NOT NULL,
+  `goods_id`       BIGINT NOT NULL,
+  `goods_item_id`  BIGINT NOT NULL,
+  `goods_name`     VARCHAR(128) NOT NULL,
+  `goods_image`    VARCHAR(255) NOT NULL DEFAULT '',
+  `deposit`        BIGINT NOT NULL COMMENT '已付定金',
+  `final_price`    BIGINT NOT NULL COMMENT '应付尾款',
+  `pay_sn`         VARCHAR(64) NOT NULL DEFAULT '',
+  `status`         TINYINT NOT NULL DEFAULT 0 COMMENT '0待付定金 1待付尾款 2已完成 3已关闭',
+  `contact`        VARCHAR(32) NOT NULL DEFAULT '',
+  `mobile`         VARCHAR(20) NOT NULL DEFAULT '',
+  `address`        VARCHAR(255) NOT NULL DEFAULT '',
+  `express_name`   VARCHAR(32) NOT NULL DEFAULT '',
+  `express_no`     VARCHAR(64) NOT NULL DEFAULT '',
+  `create_time`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `delete_flag`    TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_order_sn` (`order_sn`),
+  KEY `idx_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='预售订单';
+
+-- 演示数据（绑定商品1/SKU1）
+INSERT INTO `team_activity` (`name`, `goods_id`, `goods_item_id`, `team_price`, `team_num`, `per_limit`, `start_time`, `end_time`, `status`)
+SELECT '双人拼团耳机', 1, 1, 25900, 2, 1, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 7 DAY), 1
+WHERE NOT EXISTS (SELECT 1 FROM team_activity);
+INSERT INTO `bargain_activity` (`name`, `goods_id`, `goods_item_id`, `base_price`, `floor_price`, `help_num`, `start_time`, `end_time`, `status`)
+SELECT '砍价到199', 1, 1, 29900, 19900, 5, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 7 DAY), 1
+WHERE NOT EXISTS (SELECT 1 FROM bargain_activity);
+INSERT INTO `presell_activity` (`name`, `goods_id`, `goods_item_id`, `deposit`, `final_price`, `stock`, `start_time`, `end_time`, `final_end_time`, `status`)
+SELECT '新品预售', 1, 2, 1000, 25900, 30, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 7 DAY), DATE_ADD(CURDATE(), INTERVAL 14 DAY), 1
+WHERE NOT EXISTS (SELECT 1 FROM presell_activity);
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================

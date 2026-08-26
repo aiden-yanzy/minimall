@@ -8,7 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * Minimall 单商户商城后端启动类
  */
 @SpringBootApplication
-@MapperScan("com.minimall.module.**.mapper")
+@MapperScan("com.minimall.module")
 public class MinimallApplication {
 
     public static void main(String[] args) {
