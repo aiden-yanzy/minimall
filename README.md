@@ -42,7 +42,10 @@ curl localhost:8080/shop/auth/me -H "Authorization: Bearer <token>"
 
 ## 前端
 - **后台 admin**：`cd admin && npm i && npm run dev`（默认 http://localhost:5173，代理到 8080）
-- **C 端 uniapp**：用 HBuilderX 打开 `uniapp/` 目录 → 运行到浏览器(H5) / 微信开发者工具
+- **C 端 uniapp**：用 **HBuilderX** 打开，选择 `uniapp/` 目录 → 导入为 uni-app 项目：
+  1. HBuilderX → 文件 → 导入 → 从本地目录导入 → 选择 `uniapp/`
+  2. 顶部运行 → **运行到浏览器**(H5) 或 **运行到小程序模拟器 → 微信开发者工具**(小程序)
+  3. 后端地址在 `uniapp/api/config.js` 的 `baseUrl` 修改（H5 本地默认 http://localhost:8080；真机/小程序需改为局域网 IP）
 
 ## 迭代计划
 | 阶段 | 内容 |

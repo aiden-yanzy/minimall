@@ -2,29 +2,8 @@
   "name": "minimall-uniapp",
   "version": "0.1.0",
   "private": true,
+  "description": "Minimall C端商城 (Vue3 + uni-app)。本项目按 HBuilderX 工程结构组织（源码位于根目录），请用 HBuilderX 打开本目录运行 H5 / 微信小程序，无需 npm 依赖。",
   "scripts": {
-    "dev:h5": "uni",
-    "build:h5": "uni build",
-    "dev:mp-weixin": "uni -p mp-weixin",
-    "build:mp-weixin": "uni build -p mp-weixin"
-  },
-  "dependencies": {
-    "@dcloudio/uni-app": "3.0.0-4060520250717001",
-    "@dcloudio/uni-components": "3.0.0-4060520250717001",
-    "@dcloudio/uni-h5": "3.0.0-4060520250717001",
-    "@dcloudio/uni-mp-weixin": "3.0.0-4060520250717001",
-    "pinia": "2.0.36",
-    "vue": "^3.4.21",
-    "vue-i18n": "^9.1.9"
-  },
-  "devDependencies": {
-    "@dcloudio/types": "^3.4.8",
-    "@dcloudio/uni-automator": "3.0.0-4060520250717001",
-    "@dcloudio/uni-cli-shared": "3.0.0-4060520250717001",
-    "@dcloudio/uni-stacktracey": "3.0.0-4060520250717001",
-    "@dcloudio/vite-plugin-uni": "3.0.0-4060520250717001",
-    "@vue/runtime-core": "^3.4.21",
-    "sass": "^1.77.8",
-    "vite": "5.2.8"
+    "note": "用 HBuilderX: 文件->导入->从本地目录导入 本文件夹，然后 运行->运行到浏览器(H5) 或 运行到小程序模拟器->微信开发者工具"
   }
 }
