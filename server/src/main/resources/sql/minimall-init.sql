@@ -783,6 +783,106 @@ INSERT INTO `presell_activity` (`name`, `goods_id`, `goods_item_id`, `deposit`, 
 SELECT '新品预售', 1, 2, 1000, 25900, 30, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 7 DAY), DATE_ADD(CURDATE(), INTERVAL 14 DAY), 1
 WHERE NOT EXISTS (SELECT 1 FROM presell_activity);
 
+-- --------------------------------------------
+-- 12. 钱包 + 分销 (P6)
+-- --------------------------------------------
+ALTER TABLE `user` ADD COLUMN `referrer_id` BIGINT NULL COMMENT '推荐人id' AFTER `channel`;
+
+DROP TABLE IF EXISTS `account_log`;
+CREATE TABLE `account_log` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id`     BIGINT NOT NULL,
+  `type`        TINYINT NOT NULL COMMENT '1充值 2消费 3退款 4提现 5佣金 6签到 99其他',
+  `change_amount` BIGINT NOT NULL COMMENT '变动额(分,负数支出)',
+  `balance_after` BIGINT NOT NULL DEFAULT 0 COMMENT '变动后余额',
+  `remark`      VARCHAR(255) NOT NULL DEFAULT '',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user` (`user_id`, `type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='账户流水';
+
+DROP TABLE IF EXISTS `recharge_template`;
+CREATE TABLE `recharge_template` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name`        VARCHAR(64) NOT NULL,
+  `amount`      BIGINT NOT NULL COMMENT '充值金额(分)',
+  `gift_amount` BIGINT NOT NULL DEFAULT 0 COMMENT '赠送金额(分)',
+  `status`      TINYINT NOT NULL DEFAULT 1,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `delete_flag` TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='充值档位';
+
+DROP TABLE IF EXISTS `recharge_order`;
+CREATE TABLE `recharge_order` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `order_sn`    VARCHAR(32) NOT NULL,
+  `user_id`     BIGINT NOT NULL,
+  `template_id` BIGINT NULL,
+  `amount`      BIGINT NOT NULL COMMENT '到账金额(含赠送)',
+  `pay_amount`  BIGINT NOT NULL COMMENT '实付金额',
+  `status`      TINYINT NOT NULL DEFAULT 0 COMMENT '0待支付 1已支付',
+  `pay_sn`      VARCHAR(64) NOT NULL DEFAULT '',
+  `pay_time`    DATETIME NULL,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_order_sn` (`order_sn`),
+  KEY `idx_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='充值订单';
+
+DROP TABLE IF EXISTS `withdraw_apply`;
+CREATE TABLE `withdraw_apply` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id`     BIGINT NOT NULL,
+  `amount`      BIGINT NOT NULL COMMENT '提现金额(分)',
+  `type`        TINYINT NOT NULL DEFAULT 1 COMMENT '1微信 2银行卡 3余额',
+  `account_info` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '收款账户',
+  `status`      TINYINT NOT NULL DEFAULT 0 COMMENT '0待审核 1已通过 2已拒绝 3已打款',
+  `remark`      VARCHAR(255) NOT NULL DEFAULT '',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='提现申请';
+
+DROP TABLE IF EXISTS `distribution_level`;
+CREATE TABLE `distribution_level` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name`        VARCHAR(64) NOT NULL,
+  `level`       INT NOT NULL DEFAULT 1,
+  `commission_rate` INT NOT NULL DEFAULT 0 COMMENT '佣金比例(千分比,100=10%)',
+  `upgrade_condition` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '升级条件',
+  `status`      TINYINT NOT NULL DEFAULT 1,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='分销等级';
+
+DROP TABLE IF EXISTS `distribution_order_goods`;
+CREATE TABLE `distribution_order_goods` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `order_id`    BIGINT NOT NULL,
+  `order_goods_id` BIGINT NOT NULL,
+  `buyer_user_id` BIGINT NOT NULL COMMENT '买家',
+  `seller_user_id` BIGINT NOT NULL COMMENT '获佣用户(推荐人)',
+  `goods_amount` BIGINT NOT NULL COMMENT '商品实付',
+  `rate`        INT NOT NULL DEFAULT 0 COMMENT '佣金比例',
+  `commission`  BIGINT NOT NULL DEFAULT 0 COMMENT '佣金(分)',
+  `status`      TINYINT NOT NULL DEFAULT 0 COMMENT '0待结算 1已结算 2已取消',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_seller` (`seller_user_id`),
+  KEY `idx_order` (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='分销订单佣金';
+
+INSERT INTO `recharge_template` (`name`, `amount`, `gift_amount`, `status`) VALUES
+('充50送5', 5000, 500, 1),
+('充100送15', 10000, 1500, 1),
+('充200送40', 20000, 4000, 1);
+INSERT INTO `distribution_level` (`name`, `level`, `commission_rate`, `status`) VALUES
+('普通分销员', 1, 100, 1),
+('高级分销员', 2, 150, 1);
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================

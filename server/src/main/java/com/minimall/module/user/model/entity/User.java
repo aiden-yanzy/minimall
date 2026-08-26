@@ -58,6 +58,9 @@ public class User extends BaseEntity {
     /** 注册渠道：h5/miniapp/wechat */
     private String channel;
 
+    /** 推荐人 id（分销） */
+    private Long referrerId;
+
     /** 最后登录时间 */
     private LocalDateTime lastLoginTime;
 }

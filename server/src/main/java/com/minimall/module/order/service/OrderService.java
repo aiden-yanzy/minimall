@@ -7,6 +7,7 @@ import com.minimall.common.exception.BusinessException;
 import com.minimall.common.result.ResultCode;
 import com.minimall.module.cart.model.entity.Cart;
 import com.minimall.module.cart.service.CartService;
+import com.minimall.module.distribution.service.DistributionService;
 import com.minimall.module.goods.model.entity.Goods;
 import com.minimall.module.goods.model.entity.GoodsItem;
 import com.minimall.module.goods.service.GoodsService;
@@ -49,6 +50,7 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
     private final UserLevelService userLevelService;
     private final UserService userService;
     private final SeckillService seckillService;
+    private final DistributionService distributionService;
 
     /** 内部结算行 */
     private static class Line {
@@ -340,6 +342,11 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
                 .update();
     }
 
+    /** 按订单号查询 */
+    public Order getByOrderSn(String orderSn) {
+        return this.lambdaQuery().eq(Order::getOrderSn, orderSn).one();
+    }
+
     /** 后台订单分页（含商品） */
     public List<OrderVO> adminList(Integer status, String orderSn) {
         return this.lambdaQuery()
@@ -367,6 +374,8 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
                 .set(Order::getOrderStatus, 3)
                 .set(Order::getReceiveTime, LocalDateTime.now())
                 .update();
+        // 收货后结算分销佣金
+        distributionService.settle(orderId);
     }
 
     /** 后台发货 */

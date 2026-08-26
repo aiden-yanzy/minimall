@@ -2,9 +2,11 @@ package com.minimall.module.pay.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.minimall.common.result.R;
+import com.minimall.common.result.ResultCode;
 import com.minimall.module.order.service.OrderService;
 import com.minimall.module.pay.model.dto.MockPayDTO;
 import com.minimall.module.user.service.UserService;
+import com.minimall.module.wallet.service.WalletService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -27,13 +29,25 @@ public class PayController {
 
     private final OrderService orderService;
     private final UserService userService;
+    private final WalletService walletService;
 
-    @Operation(summary = "模拟支付（直接标记订单已支付）")
+    @Operation(summary = "模拟支付（直接标记订单已支付；payType=3 余额支付扣余额）")
     @PostMapping("/mock")
     public R<Void> mock(@Valid @RequestBody MockPayDTO dto) {
-        // 校验订单归属
         Long userId = userService.getCurrentUserId();
         String paySn = "MOCK" + System.currentTimeMillis();
+        // 余额支付：校验余额并扣减
+        if (dto.getPayType() != null && dto.getPayType() == 3) {
+            var order = orderService.getByOrderSn(dto.getOrderSn());
+            if (order == null) {
+                return R.fail(ResultCode.ORDER_NOT_EXIST);
+            }
+            long balance = userService.getById(userId).getBalance() == null ? 0 : userService.getById(userId).getBalance();
+            if (balance < order.getPayAmount()) {
+                return R.fail("余额不足");
+            }
+            walletService.changeBalance(userId, -order.getPayAmount(), 2, "订单支付:" + order.getOrderSn());
+        }
         orderService.markPaid(dto.getOrderSn(), dto.getPayType(), paySn);
         return R.ok();
     }
