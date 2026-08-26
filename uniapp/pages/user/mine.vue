@@ -26,8 +26,8 @@
 
     <view class="menu">
       <view class="menu-item" @click="go('/pages/order/list')">我的订单</view>
-      <view class="menu-item" @click="go('/pages/order/list')">待发货</view>
-      <view class="menu-item" @click="go('/pages/order/list')">待收货</view>
+      <view class="menu-item" @click="go('/pages/coupon/mine')">我的优惠券</view>
+      <view class="menu-item" @click="go('/pages/coupon/center')">领券中心</view>
     </view>
 
     <button v-if="userInfo" class="logout" @click="logout">退出登录</button>

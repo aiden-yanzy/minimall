@@ -10,12 +10,21 @@ import com.minimall.module.cart.service.CartService;
 import com.minimall.module.goods.model.entity.Goods;
 import com.minimall.module.goods.model.entity.GoodsItem;
 import com.minimall.module.goods.service.GoodsService;
+import com.minimall.module.marketing.model.entity.CouponList;
+import com.minimall.module.marketing.model.entity.FullReduction;
+import com.minimall.module.marketing.service.CouponService;
+import com.minimall.module.marketing.service.FullReductionService;
 import com.minimall.module.order.mapper.OrderGoodsMapper;
 import com.minimall.module.order.mapper.OrderMapper;
 import com.minimall.module.order.model.dto.OrderCreateDTO;
 import com.minimall.module.order.model.entity.Order;
 import com.minimall.module.order.model.entity.OrderGoods;
+import com.minimall.module.order.model.vo.OrderPreviewVO;
 import com.minimall.module.order.model.vo.OrderVO;
+import com.minimall.module.user.model.entity.User;
+import com.minimall.module.user.model.entity.UserLevel;
+import com.minimall.module.user.service.UserLevelService;
+import com.minimall.module.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +42,10 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
     private final OrderGoodsMapper orderGoodsMapper;
     private final GoodsService goodsService;
     private final CartService cartService;
+    private final CouponService couponService;
+    private final FullReductionService fullReductionService;
+    private final UserLevelService userLevelService;
+    private final UserService userService;
 
     /** 内部结算行 */
     private static class Line {
@@ -44,10 +57,8 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
     /** 创建订单（从购物车勾选或立即购买） */
     @Transactional(rollbackFor = Exception.class)
     public Long create(Long userId, OrderCreateDTO dto) {
-        // 1. 组装结算行
+        // 1. 组装结算行并校验
         List<Line> lines = assembleLines(userId, dto);
-
-        // 2. 校验库存
         for (Line l : lines) {
             if (l.item.getStock() == null || l.item.getStock() < l.num) {
                 throw new BusinessException(ResultCode.STOCK_NOT_ENOUGH);
@@ -56,11 +67,17 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
                 throw new BusinessException(ResultCode.GOODS_OFF_SHELF);
             }
         }
+        // 收货信息必填
+        if (cn.hutool.core.util.StrUtil.isBlank(dto.getContact()) || cn.hutool.core.util.StrUtil.isBlank(dto.getMobile())
+                || cn.hutool.core.util.StrUtil.isBlank(dto.getAddress())) {
+            throw new BusinessException(ResultCode.PARAM_ERROR.getCode(), "请填写完整收货信息");
+        }
 
-        // 3. 计算金额
+        // 2. 计算金额（商品总额 + 会员价 + 满减 + 优惠券）
         long total = lines.stream().mapToLong(l -> l.item.getPrice() * l.num).sum();
+        PromoResult promo = computePromo(userId, total, dto.getCouponListId());
 
-        // 4. 创建订单
+        // 3. 创建订单
         Order order = new Order();
         order.setOrderSn("MM" + IdUtil.getSnowflakeNextIdStr());
         order.setUserId(userId);
@@ -69,15 +86,23 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         order.setPayStatus(0);
         order.setPayType(dto.getPayType());
         order.setTotalAmount(total);
-        order.setDiscountAmount(0L);
+        order.setMemberDiscount(promo.memberDiscount);
+        order.setDiscountAmount(promo.discountAmount());
         order.setFreightAmount(0L);
-        order.setPayAmount(total);
+        order.setCouponId(promo.coupon != null ? promo.coupon.getCouponId() : null);
+        order.setCouponAmount(promo.couponAmount);
+        order.setPayAmount(promo.payAmount);
         order.setRemark(dto.getRemark());
         order.setContact(dto.getContact());
         order.setMobile(dto.getMobile());
         order.setAddress(dto.getAddress());
         order.setDeliveryType(1);
         this.save(order);
+
+        // 4. 核销优惠券
+        if (promo.coupon != null) {
+            couponService.useCoupon(userId, promo.coupon.getId(), order.getId(), total - promo.memberDiscount - promo.fullReduction);
+        }
 
         // 5. 写订单商品 + 扣库存 + 增加销量
         for (Line l : lines) {
@@ -95,9 +120,7 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
             og.setDiscountPrice(0L);
             orderGoodsMapper.insert(og);
 
-            // 扣 SKU 库存、加销量
             goodsService.deductStock(l.item.getId(), l.num);
-            // 扣 SPU 库存、加销量
             goodsService.addSales(l.goods.getId(), l.num);
         }
 
@@ -106,6 +129,71 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
             cartService.removeSelected(userId);
         }
         return order.getId();
+    }
+
+    /** 下单预览（无副作用）：金额明细 + 可用优惠券 */
+    public OrderPreviewVO preview(Long userId, OrderCreateDTO dto) {
+        List<Line> lines = assembleLines(userId, dto);
+        long total = lines.stream().mapToLong(l -> l.item.getPrice() * l.num).sum();
+        PromoResult promo = computePromo(userId, total, dto.getCouponListId());
+
+        OrderPreviewVO vo = new OrderPreviewVO();
+        vo.setTotalAmount(total);
+        vo.setMemberDiscount(promo.memberDiscount);
+        vo.setFullReduction(promo.fullReduction);
+        vo.setCouponAmount(promo.couponAmount);
+        vo.setDiscountAmount(promo.discountAmount());
+        vo.setPayAmount(promo.payAmount);
+        vo.setAvailableCoupons(couponService.usable(userId, total - promo.memberDiscount - promo.fullReduction));
+        // 会员等级名
+        User user = userService.getById(userId);
+        if (user != null && user.getLevelId() != null) {
+            UserLevel level = userLevelService.getById(user.getLevelId());
+            vo.setMemberName(level != null ? level.getName() : null);
+        }
+        return vo;
+    }
+
+    /** 促销计算结果 */
+    private static class PromoResult {
+        long memberDiscount = 0;
+        long fullReduction = 0;
+        long couponAmount = 0;
+        long payAmount;
+        CouponList coupon;
+
+        long discountAmount() {
+            return memberDiscount + fullReduction;
+        }
+    }
+
+    /** 计算促销优惠（会员价 → 满减 → 优惠券） */
+    private PromoResult computePromo(Long userId, long total, Long couponListId) {
+        PromoResult r = new PromoResult();
+        User user = userService.getById(userId);
+        // 会员价
+        long payable = total;
+        if (user != null) {
+            java.math.BigDecimal disc = userLevelService.discountOf(user.getLevelId());
+            long memberPay = new java.math.BigDecimal(total).multiply(disc).longValue();
+            r.memberDiscount = Math.max(0, total - memberPay);
+            payable = total - r.memberDiscount;
+        }
+        // 满减
+        FullReduction fr = fullReductionService.currentActive().orElse(null);
+        if (fr != null && payable >= fr.getThreshold()) {
+            r.fullReduction = Math.min(fr.getReduce(), payable);
+            payable -= r.fullReduction;
+        }
+        // 优惠券
+        if (couponListId != null) {
+            CouponList cl = couponService.validateCoupon(userId, couponListId, payable);
+            r.coupon = cl;
+            r.couponAmount = CouponService.calcDiscount(cl.getType(), cl.getDiscountValue(), payable);
+            payable -= r.couponAmount;
+        }
+        r.payAmount = payable;
+        return r;
     }
 
     private List<Line> assembleLines(Long userId, OrderCreateDTO dto) {

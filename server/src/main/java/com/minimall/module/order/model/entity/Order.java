@@ -25,6 +25,7 @@ public class Order extends BaseEntity {
     private LocalDateTime payTime;
     private String paySn;
     private Long totalAmount;
+    private Long memberDiscount;
     private Long discountAmount;
     private Long freightAmount;
     private Long payAmount;

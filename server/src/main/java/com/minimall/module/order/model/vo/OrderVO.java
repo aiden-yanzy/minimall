@@ -21,7 +21,9 @@ public class OrderVO {
     private Integer payType;
     private LocalDateTime payTime;
     private Long totalAmount;
+    private Long memberDiscount;
     private Long discountAmount;
+    private Long couponAmount;
     private Long freightAmount;
     private Long payAmount;
     private String remark;
@@ -73,7 +75,9 @@ public class OrderVO {
         vo.setPayType(o.getPayType());
         vo.setPayTime(o.getPayTime());
         vo.setTotalAmount(o.getTotalAmount());
+        vo.setMemberDiscount(o.getMemberDiscount());
         vo.setDiscountAmount(o.getDiscountAmount());
+        vo.setCouponAmount(o.getCouponAmount());
         vo.setFreightAmount(o.getFreightAmount());
         vo.setPayAmount(o.getPayAmount());
         vo.setRemark(o.getRemark());

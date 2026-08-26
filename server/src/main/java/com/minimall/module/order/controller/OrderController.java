@@ -3,6 +3,7 @@ package com.minimall.module.order.controller;
 import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.minimall.common.result.R;
 import com.minimall.module.order.model.dto.OrderCreateDTO;
+import com.minimall.module.order.model.vo.OrderPreviewVO;
 import com.minimall.module.order.model.vo.OrderVO;
 import com.minimall.module.order.service.OrderService;
 import com.minimall.module.user.service.UserService;
@@ -37,6 +38,12 @@ public class OrderController {
     @PostMapping("/create")
     public R<Long> create(@Valid @RequestBody OrderCreateDTO dto) {
         return R.ok("下单成功", orderService.create(userService.getCurrentUserId(), dto));
+    }
+
+    @Operation(summary = "下单预览(金额明细+可用券)")
+    @PostMapping("/preview")
+    public R<OrderPreviewVO> preview(@Valid @RequestBody OrderCreateDTO dto) {
+        return R.ok(orderService.preview(userService.getCurrentUserId(), dto));
     }
 
     @Operation(summary = "订单列表")

@@ -19,15 +19,15 @@ public class OrderCreateDTO {
     /** buyNow 时传入：数量 */
     private Integer num = 1;
 
-    /** 收货信息（P1 直接传入，后续接地址簿） */
-    @NotBlank(message = "收货人不能为空")
+    /** 收货信息（create 时必填；preview 可空） */
     private String contact;
-    @NotBlank(message = "手机号不能为空")
     private String mobile;
-    @NotBlank(message = "收货地址不能为空")
     private String address;
 
     private String remark;
+
+    /** 使用的用户优惠券 id（可选） */
+    private Long couponListId;
 
     /** 支付方式：1微信 2支付宝 3余额 */
     private Integer payType = 1;

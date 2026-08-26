@@ -326,6 +326,7 @@ CREATE TABLE `orders` (
   `pay_time`       DATETIME NULL,
   `pay_sn`         VARCHAR(64) NOT NULL DEFAULT '' COMMENT '支付流水号',
   `total_amount`   BIGINT NOT NULL DEFAULT 0 COMMENT '商品总额(分)',
+  `member_discount` BIGINT NOT NULL DEFAULT 0 COMMENT '会员折扣(分)',
   `discount_amount` BIGINT NOT NULL DEFAULT 0 COMMENT '优惠金额(分)',
   `freight_amount` BIGINT NOT NULL DEFAULT 0 COMMENT '运费(分)',
   `pay_amount`     BIGINT NOT NULL DEFAULT 0 COMMENT '实付(分)',
@@ -438,6 +439,79 @@ CREATE TABLE `region` (
   PRIMARY KEY (`id`),
   KEY `idx_pid` (`pid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='行政区域(基础)';
+
+-- --------------------------------------------
+-- 6. 营销域 (P3)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `coupon`;
+CREATE TABLE `coupon` (
+  `id`             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name`           VARCHAR(64) NOT NULL COMMENT '券名称',
+  `type`           TINYINT NOT NULL DEFAULT 1 COMMENT '1满减券 2折扣券',
+  `scope`          TINYINT NOT NULL DEFAULT 1 COMMENT '1全场 2分类 3指定商品',
+  `scope_ids`      VARCHAR(500) NOT NULL DEFAULT '' COMMENT '分类/商品id集合',
+  `threshold`      BIGINT NOT NULL DEFAULT 0 COMMENT '使用门槛(分),0=无门槛',
+  `discount_value` BIGINT NOT NULL DEFAULT 0 COMMENT '满减金额(分) 或 折扣(千分比,950=9.5折)',
+  `total_count`    INT NOT NULL DEFAULT 0 COMMENT '发放总量,0=不限',
+  `send_count`     INT NOT NULL DEFAULT 0 COMMENT '已发放',
+  `per_limit`      INT NOT NULL DEFAULT 1 COMMENT '每人限领',
+  `valid_type`     TINYINT NOT NULL DEFAULT 1 COMMENT '1固定日期 2领取后N天',
+  `start_time`     DATETIME NULL,
+  `end_time`       DATETIME NULL,
+  `valid_days`     INT NOT NULL DEFAULT 0 COMMENT '领取后有效天数',
+  `status`         TINYINT NOT NULL DEFAULT 1 COMMENT '1启用 0停用',
+  `description`    VARCHAR(255) NOT NULL DEFAULT '',
+  `create_time`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `delete_flag`    TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优惠券模板';
+
+DROP TABLE IF EXISTS `coupon_list`;
+CREATE TABLE `coupon_list` (
+  `id`             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `coupon_id`      BIGINT NOT NULL,
+  `user_id`        BIGINT NOT NULL,
+  `coupon_name`    VARCHAR(64) NOT NULL,
+  `type`           TINYINT NOT NULL DEFAULT 1,
+  `scope`          TINYINT NOT NULL DEFAULT 1,
+  `scope_ids`      VARCHAR(500) NOT NULL DEFAULT '',
+  `threshold`      BIGINT NOT NULL DEFAULT 0,
+  `discount_value` BIGINT NOT NULL DEFAULT 0,
+  `status`         TINYINT NOT NULL DEFAULT 0 COMMENT '0未使用 1已使用 2已过期',
+  `receive_time`   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `expire_time`    DATETIME NULL,
+  `use_time`       DATETIME NULL,
+  `use_order_id`   BIGINT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_user` (`user_id`, `status`),
+  KEY `idx_coupon` (`coupon_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户优惠券';
+
+DROP TABLE IF EXISTS `full_reduction`;
+CREATE TABLE `full_reduction` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name`        VARCHAR(64) NOT NULL,
+  `threshold`   BIGINT NOT NULL COMMENT '满(分)',
+  `reduce`      BIGINT NOT NULL COMMENT '减(分)',
+  `start_time`  DATETIME NULL,
+  `end_time`    DATETIME NULL,
+  `status`      TINYINT NOT NULL DEFAULT 1 COMMENT '1启用 0停用',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `delete_flag` TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='全场满减规则';
+
+-- 演示优惠券与满减
+INSERT INTO `coupon` (`name`, `type`, `scope`, `threshold`, `discount_value`, `total_count`, `per_limit`, `valid_type`, `valid_days`, `status`, `description`) VALUES
+('新人无门槛5元券', 1, 1, 0, 500, 1000, 1, 2, 7, 1, '新用户专享，无门槛立减5元'),
+('满300减50', 1, 1, 30000, 5000, 500, 1, 2, 30, 1, '全场满300减50');
+
+INSERT INTO `full_reduction` (`name`, `threshold`, `reduce`, `status`) VALUES
+('全场满200减20', 20000, 2000, 1);
+
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
 -- 初始数据

@@ -1,6 +1,7 @@
 import { get, post } from './request'
 
 export const createOrder = (data) => post('/shop/order/create', data)
+export const previewOrder = (data) => post('/shop/order/preview', data)
 export const getOrderList = (status) => get('/shop/order', { status })
 export const getOrderDetail = (id) => get('/shop/order/' + id)
 export const cancelOrder = (id, reason) => post('/shop/order/' + id + '/cancel?reason=' + (reason || ''))

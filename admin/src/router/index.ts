@@ -38,6 +38,12 @@ const router = createRouter({
           name: 'after',
           component: () => import('@/views/order/after.vue'),
           meta: { title: '售后管理' }
+        },
+        {
+          path: 'marketing',
+          name: 'marketing',
+          component: () => import('@/views/marketing/index.vue'),
+          meta: { title: '营销管理' }
         }
       ]
     }

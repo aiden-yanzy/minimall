@@ -1,6 +1,5 @@
 <template>
   <view class="confirm">
-    <!-- 收货地址 -->
     <view class="section">
       <view class="addr-title">收货信息</view>
       <view class="addr-row">
@@ -10,7 +9,6 @@
       <input v-model="address" class="ipt full" placeholder="详细地址" />
     </view>
 
-    <!-- 商品 -->
     <view class="section">
       <view v-for="g in goodsList" :key="g.key" class="g-item">
         <image class="img" :src="g.image" mode="aspectFill" />
@@ -30,24 +28,50 @@
         <text>支付方式</text>
         <text class="pay-name">{{ payTypeName }}</text>
       </view>
+      <view class="pay-row" @click="showCoupon = true">
+        <text>优惠券</text>
+        <text class="pay-name">{{ couponText }}</text>
+      </view>
+      <view class="amount-row" v-if="preview">
+        <text>商品金额</text><text>￥{{ fen2yuan(preview.totalAmount) }}</text>
+      </view>
+      <view class="amount-row" v-if="preview?.memberDiscount">
+        <text>会员优惠({{ preview.memberName || '' }})</text><text class="red">-￥{{ fen2yuan(preview.memberDiscount) }}</text>
+      </view>
+      <view class="amount-row" v-if="preview?.fullReduction">
+        <text>满减</text><text class="red">-￥{{ fen2yuan(preview.fullReduction) }}</text>
+      </view>
+      <view class="amount-row" v-if="preview?.couponAmount">
+        <text>优惠券</text><text class="red">-￥{{ fen2yuan(preview.couponAmount) }}</text>
+      </view>
       <view class="total-row">
         <text>应付</text>
-        <text class="total">￥{{ fen2yuan(totalPrice) }}</text>
+        <text class="total">￥{{ fen2yuan(preview?.payAmount ?? totalPrice) }}</text>
       </view>
     </view>
 
-    <!-- 底部提交 -->
     <view class="footer">
-      <view class="total">合计 ￥{{ fen2yuan(totalPrice) }}</view>
-      <view class="submit" @click="submit" :class="{ loading: submitting }">提交订单</view>
+      <view class="total">合计 ￥{{ fen2yuan(preview?.payAmount ?? totalPrice) }}</view>
+      <view class="submit" :class="{ loading: submitting }" @click="submit">提交订单</view>
     </view>
 
-    <!-- 支付方式弹层 -->
+    <!-- 支付方式 -->
     <view v-if="showPay" class="mask" @click="showPay = false"></view>
     <view v-if="showPay" class="sheet">
       <view class="pay-option" @click="selectPay(1)">微信支付<text v-if="payType === 1">✓</text></view>
       <view class="pay-option" @click="selectPay(2)">支付宝<text v-if="payType === 2">✓</text></view>
       <view class="pay-option" @click="selectPay(3)">余额支付<text v-if="payType === 3">✓</text></view>
+    </view>
+
+    <!-- 优惠券 -->
+    <view v-if="showCoupon" class="mask" @click="showCoupon = false"></view>
+    <view v-if="showCoupon" class="sheet">
+      <view class="pay-option" @click="selectCoupon(null)">不使用优惠券</view>
+      <view v-for="c in available" :key="c.id" class="pay-option" @click="selectCoupon(c)">
+        {{ c.couponName }}
+        <text v-if="selectedCouponId === c.id">✓</text>
+      </view>
+      <view v-if="!available.length" class="pay-option none">暂无可用优惠券</view>
     </view>
   </view>
 </template>
@@ -57,7 +81,7 @@ import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getCartList } from '@/api/cart'
 import { getGoodsDetail } from '@/api/goods'
-import { createOrder } from '@/api/order'
+import { createOrder, previewOrder } from '@/api/order'
 import { fen2yuan } from '@/utils/format'
 
 const buyType = ref('cart')
@@ -71,11 +95,19 @@ const address = ref('')
 const goodsList = ref([])
 const payType = ref(1)
 const showPay = ref(false)
+const showCoupon = ref(false)
 const submitting = ref(false)
 
-const payTypeName = computed(() => ({ 1: '微信支付', 2: '支付宝', 3: '余额支付' }[payType.value]))
+const preview = ref(null)
+const available = ref([])
+const selectedCouponId = ref(null)
 
+const payTypeName = computed(() => ({ 1: '微信支付', 2: '支付宝', 3: '余额支付' }[payType.value]))
 const totalPrice = computed(() => goodsList.value.reduce((s, g) => s + g.price * g.num, 0))
+const couponText = computed(() => {
+  const c = available.value.find((i) => i.id === selectedCouponId.value)
+  return c ? c.couponName : '不使用优惠券'
+})
 
 async function init() {
   if (buyType.value === 'cart') {
@@ -97,11 +129,34 @@ async function init() {
       num: num.value
     }]
   }
+  await fetchPreview()
+}
+
+function buildDto(couponListId) {
+  const dto = { buyType: buyType.value, payType: payType.value }
+  if (couponListId) dto.couponListId = couponListId
+  if (buyType.value === 'buyNow') {
+    dto.goodsItemId = goodsItemId.value
+    dto.num = num.value
+  }
+  return dto
+}
+
+async function fetchPreview(couponListId) {
+  const res = await previewOrder(buildDto(couponListId === undefined ? selectedCouponId.value : couponListId))
+  preview.value = res.data
+  available.value = res.data.availableCoupons || []
 }
 
 function selectPay(t) {
   payType.value = t
   showPay.value = false
+}
+
+async function selectCoupon(c) {
+  selectedCouponId.value = c ? c.id : null
+  showCoupon.value = false
+  await fetchPreview()
 }
 
 async function submit() {
@@ -115,9 +170,9 @@ async function submit() {
       contact: contact.value,
       mobile: mobile.value,
       address: address.value,
-      remark: '',
       payType: payType.value
     }
+    if (selectedCouponId.value) payload.couponListId = selectedCouponId.value
     if (buyType.value === 'buyNow') {
       payload.goodsItemId = goodsItemId.value
       payload.num = num.value
@@ -156,14 +211,8 @@ onLoad((opts) => {
   padding: 24rpx;
   margin-bottom: 16rpx;
 }
-.addr-title {
-  font-weight: bold;
-  margin-bottom: 16rpx;
-}
-.addr-row {
-  display: flex;
-  gap: 16rpx;
-}
+.addr-title { font-weight: bold; margin-bottom: 16rpx; }
+.addr-row { display: flex; gap: 16rpx; }
 .ipt {
   flex: 1;
   height: 72rpx;
@@ -173,97 +222,27 @@ onLoad((opts) => {
   margin-bottom: 16rpx;
   font-size: 26rpx;
 }
-.ipt.full {
-  width: 100%;
-  box-sizing: border-box;
-}
-.g-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20rpx;
-}
-.img {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 10rpx;
-  background: #f0f0f0;
-}
-.g-info {
-  flex: 1;
-  margin-left: 16rpx;
-}
-.g-name {
-  font-size: 26rpx;
-}
-.g-spec {
-  color: #999;
-  font-size: 22rpx;
-  margin-top: 6rpx;
-}
-.g-price {
-  text-align: right;
-  color: #333;
-}
-.g-num {
-  color: #999;
-  margin-top: 10rpx;
-}
-.pay-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 10rpx 0;
-}
-.pay-name {
-  color: #333;
-}
-.total-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 10rpx 0;
-  font-weight: bold;
-}
-.total {
-  color: #ff2d2d;
-  font-size: 36rpx;
-}
+.ipt.full { width: 100%; box-sizing: border-box; }
+.g-item { display: flex; align-items: center; margin-bottom: 20rpx; }
+.img { width: 120rpx; height: 120rpx; border-radius: 10rpx; background: #f0f0f0; }
+.g-info { flex: 1; margin-left: 16rpx; }
+.g-name { font-size: 26rpx; }
+.g-spec { color: #999; font-size: 22rpx; margin-top: 6rpx; }
+.g-price { text-align: right; }
+.g-num { color: #999; margin-top: 10rpx; }
+.pay-row { display: flex; justify-content: space-between; padding: 14rpx 0; }
+.amount-row { display: flex; justify-content: space-between; padding: 8rpx 0; color: #333; font-size: 26rpx; }
+.red { color: #ff2d2d; }
+.total-row { display: flex; justify-content: space-between; padding: 10rpx 0; font-weight: bold; }
+.total { color: #ff2d2d; font-size: 36rpx; }
 .footer {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 16rpx 20rpx;
-  gap: 30rpx;
+  position: fixed; left: 0; right: 0; bottom: 0;
+  background: #fff; display: flex; align-items: center; justify-content: flex-end;
+  padding: 16rpx 20rpx; gap: 30rpx;
 }
-.submit {
-  background: #ff2d2d;
-  color: #fff;
-  border-radius: 44rpx;
-  padding: 20rpx 60rpx;
-}
-.mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 10;
-}
-.sheet {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #fff;
-  z-index: 11;
-  padding: 20rpx;
-}
-.pay-option {
-  padding: 30rpx;
-  border-bottom: 1rpx solid #f0f0f0;
-  display: flex;
-  justify-content: space-between;
-  color: #333;
-}
+.submit { background: #ff2d2d; color: #fff; border-radius: 44rpx; padding: 20rpx 60rpx; }
+.mask { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 10; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; z-index: 11; padding: 20rpx; max-height: 60vh; overflow-y: auto; }
+.pay-option { padding: 30rpx; border-bottom: 1rpx solid #f0f0f0; display: flex; justify-content: space-between; }
+.pay-option.none { justify-content: center; color: #999; }
 </style>
