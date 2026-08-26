@@ -62,6 +62,12 @@ const router = createRouter({
           name: 'wallet',
           component: () => import('@/views/wallet/index.vue'),
           meta: { title: '提现审核' }
+        },
+        {
+          path: 'content',
+          name: 'content',
+          component: () => import('@/views/content/index.vue'),
+          meta: { title: '内容装修' }
         }
       ]
     }

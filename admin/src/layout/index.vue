@@ -35,6 +35,10 @@
           <el-icon><Present /></el-icon>
           <span>提现审核</span>
         </el-menu-item>
+        <el-menu-item index="/content">
+          <el-icon><Present /></el-icon>
+          <span>内容装修</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>

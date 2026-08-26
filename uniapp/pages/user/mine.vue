@@ -29,6 +29,8 @@
       <view class="menu-item" @click="go('/pages/coupon/mine')">我的优惠券</view>
       <view class="menu-item" @click="go('/pages/coupon/center')">领券中心</view>
       <view class="menu-item" @click="go('/pages/wallet/wallet')">我的钱包</view>
+      <view class="menu-item" @click="go('/pages/article/list')">文章资讯</view>
+      <view class="menu-item" @click="go('/pages/kefu/kefu')">在线客服</view>
       <view class="menu-item" @click="go('/pages/integral/list')">积分商城</view>
       <view class="menu-item" @click="go('/pages/seckill/list')">限时秒杀</view>
       <view class="menu-item" @click="go('/pages/team/list')">我的拼团</view>

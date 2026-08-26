@@ -119,6 +119,24 @@
       "style": {
         "navigationBarTitleText": "我的钱包"
       }
+    },
+    {
+      "path": "pages/kefu/kefu",
+      "style": {
+        "navigationBarTitleText": "在线客服"
+      }
+    },
+    {
+      "path": "pages/article/list",
+      "style": {
+        "navigationBarTitleText": "文章中心"
+      }
+    },
+    {
+      "path": "pages/article/detail",
+      "style": {
+        "navigationBarTitleText": "文章详情"
+      }
     }
   ],
   "globalStyle": {
