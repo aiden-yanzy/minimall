@@ -27,6 +27,10 @@
           <el-icon><Present /></el-icon>
           <span>积分商城</span>
         </el-menu-item>
+        <el-menu-item index="/seckill">
+          <el-icon><Present /></el-icon>
+          <span>秒杀管理</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>

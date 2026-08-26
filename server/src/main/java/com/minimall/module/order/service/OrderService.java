@@ -21,6 +21,8 @@ import com.minimall.module.order.model.entity.Order;
 import com.minimall.module.order.model.entity.OrderGoods;
 import com.minimall.module.order.model.vo.OrderPreviewVO;
 import com.minimall.module.order.model.vo.OrderVO;
+import com.minimall.module.seckill.model.entity.SeckillGoods;
+import com.minimall.module.seckill.service.SeckillService;
 import com.minimall.module.user.model.entity.User;
 import com.minimall.module.user.model.entity.UserLevel;
 import com.minimall.module.user.service.UserLevelService;
@@ -46,19 +48,34 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
     private final FullReductionService fullReductionService;
     private final UserLevelService userLevelService;
     private final UserService userService;
+    private final SeckillService seckillService;
 
     /** 内部结算行 */
     private static class Line {
         GoodsItem item;
         Goods goods;
         int num;
+        long price; // 实际成交单价（秒杀时为秒杀价）
     }
 
-    /** 创建订单（从购物车勾选或立即购买） */
+    /** 创建订单（购物车/立即购买/秒杀） */
     @Transactional(rollbackFor = Exception.class)
     public Long create(Long userId, OrderCreateDTO dto) {
+        // 0. 秒杀：预扣 Redis 库存并校验，构造秒杀结算行
+        SeckillGoods seckillGoods = null;
+        if (dto.getSeckillGoodsId() != null) {
+            int n = dto.getNum() == null ? 1 : dto.getNum();
+            seckillGoods = seckillService.validateForBuy(dto.getSeckillGoodsId(), userId, n);
+        }
+
         // 1. 组装结算行并校验
-        List<Line> lines = assembleLines(userId, dto);
+        List<Line> lines;
+        try {
+            lines = assembleLines(userId, dto);
+        } catch (RuntimeException e) {
+            if (seckillGoods != null) seckillService.rollback(seckillGoods.getId(), dto.getNum());
+            throw e;
+        }
         for (Line l : lines) {
             if (l.item.getStock() == null || l.item.getStock() < l.num) {
                 throw new BusinessException(ResultCode.STOCK_NOT_ENOUGH);
@@ -70,18 +87,19 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         // 收货信息必填
         if (cn.hutool.core.util.StrUtil.isBlank(dto.getContact()) || cn.hutool.core.util.StrUtil.isBlank(dto.getMobile())
                 || cn.hutool.core.util.StrUtil.isBlank(dto.getAddress())) {
+            if (seckillGoods != null) seckillService.rollback(seckillGoods.getId(), dto.getNum());
             throw new BusinessException(ResultCode.PARAM_ERROR.getCode(), "请填写完整收货信息");
         }
 
         // 2. 计算金额（商品总额 + 会员价 + 满减 + 优惠券）
-        long total = lines.stream().mapToLong(l -> l.item.getPrice() * l.num).sum();
+        long total = lines.stream().mapToLong(l -> l.price * l.num).sum();
         PromoResult promo = computePromo(userId, total, dto.getCouponListId());
 
         // 3. 创建订单
         Order order = new Order();
         order.setOrderSn("MM" + IdUtil.getSnowflakeNextIdStr());
         order.setUserId(userId);
-        order.setOrderType(0);
+        order.setOrderType(seckillGoods != null ? 2 : 0);
         order.setOrderStatus(0);
         order.setPayStatus(0);
         order.setPayType(dto.getPayType());
@@ -104,7 +122,7 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
             couponService.useCoupon(userId, promo.coupon.getId(), order.getId(), total - promo.memberDiscount - promo.fullReduction);
         }
 
-        // 5. 写订单商品 + 扣库存 + 增加销量
+        // 5. 写订单商品；秒杀不扣普通库存，落库扣秒杀库存
         for (Line l : lines) {
             OrderGoods og = new OrderGoods();
             og.setOrderId(order.getId());
@@ -114,14 +132,19 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
             og.setGoodsName(l.goods.getName());
             og.setGoodsImage(l.goods.getImage());
             og.setSpecValueStr(l.item.getSpecValueStr());
-            og.setPrice(l.item.getPrice());
+            og.setPrice(l.price);
             og.setNum(l.num);
-            og.setTotalPrice(l.item.getPrice() * l.num);
+            og.setTotalPrice(l.price * l.num);
             og.setDiscountPrice(0L);
             orderGoodsMapper.insert(og);
 
-            goodsService.deductStock(l.item.getId(), l.num);
-            goodsService.addSales(l.goods.getId(), l.num);
+            if (seckillGoods == null) {
+                goodsService.deductStock(l.item.getId(), l.num);
+                goodsService.addSales(l.goods.getId(), l.num);
+            }
+        }
+        if (seckillGoods != null) {
+            seckillService.commitDeduct(seckillGoods.getId(), dto.getNum());
         }
 
         // 6. 清空已勾选购物车
@@ -131,10 +154,15 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         return order.getId();
     }
 
+    /** 秒杀购买专用开关 */
+    private boolean isSeckill(Order order) {
+        return order.getOrderType() != null && order.getOrderType() == 2;
+    }
+
     /** 下单预览（无副作用）：金额明细 + 可用优惠券 */
     public OrderPreviewVO preview(Long userId, OrderCreateDTO dto) {
         List<Line> lines = assembleLines(userId, dto);
-        long total = lines.stream().mapToLong(l -> l.item.getPrice() * l.num).sum();
+        long total = lines.stream().mapToLong(l -> l.price * l.num).sum();
         PromoResult promo = computePromo(userId, total, dto.getCouponListId());
 
         OrderPreviewVO vo = new OrderPreviewVO();
@@ -198,13 +226,25 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
 
     private List<Line> assembleLines(Long userId, OrderCreateDTO dto) {
         List<Line> result = new ArrayList<>();
-        if ("buyNow".equals(dto.getBuyType())) {
+        if (dto.getSeckillGoodsId() != null) {
+            SeckillGoods sg = seckillService.getById(dto.getSeckillGoodsId());
+            if (sg == null) throw new BusinessException("秒杀商品不存在");
+            GoodsItem item = goodsService.getGoodsItem(sg.getGoodsItemId());
+            if (item == null) throw new BusinessException(ResultCode.GOODS_NOT_EXIST);
+            Line l = new Line();
+            l.item = item;
+            l.goods = goodsService.getById(item.getGoodsId());
+            l.num = dto.getNum() == null ? 1 : dto.getNum();
+            l.price = sg.getSeckillPrice();
+            result.add(l);
+        } else if ("buyNow".equals(dto.getBuyType())) {
             GoodsItem item = goodsService.getGoodsItem(dto.getGoodsItemId());
             if (item == null) throw new BusinessException(ResultCode.GOODS_NOT_EXIST);
             Line l = new Line();
             l.item = item;
             l.goods = goodsService.getById(item.getGoodsId());
             l.num = dto.getNum() == null ? 1 : dto.getNum();
+            l.price = item.getPrice();
             result.add(l);
         } else {
             List<Cart> carts = cartService.lambdaQuery()
@@ -218,6 +258,7 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
                 l.item = item;
                 l.goods = goodsService.getById(item.getGoodsId());
                 l.num = c.getNum();
+                l.price = item.getPrice();
                 result.add(l);
             }
         }
@@ -265,12 +306,17 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         if (order.getOrderStatus() != 0) {
             throw new BusinessException(ResultCode.ORDER_STATUS_ERROR);
         }
-        // 未支付才允许取消；恢复库存
+        // 未支付才允许取消；恢复库存（秒杀单回补秒杀库存）
         List<OrderGoods> ogs = orderGoodsMapper.selectList(
                 Wrappers.<OrderGoods>lambdaQuery().eq(OrderGoods::getOrderId, id));
+        boolean seckill = order.getOrderType() != null && order.getOrderType() == 2;
         for (OrderGoods og : ogs) {
-            goodsService.restoreStock(og.getGoodsItemId(), og.getNum());
-            goodsService.minusSales(og.getGoodsId(), og.getNum());
+            if (seckill) {
+                seckillService.rollbackByItemId(og.getGoodsItemId(), og.getNum());
+            } else {
+                goodsService.restoreStock(og.getGoodsItemId(), og.getNum());
+                goodsService.minusSales(og.getGoodsId(), og.getNum());
+            }
         }
         this.lambdaUpdate().eq(Order::getId, id)
                 .set(Order::getOrderStatus, 4)

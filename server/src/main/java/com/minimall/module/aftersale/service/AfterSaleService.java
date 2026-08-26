@@ -12,6 +12,7 @@ import com.minimall.module.goods.service.GoodsService;
 import com.minimall.module.order.model.entity.Order;
 import com.minimall.module.order.model.entity.OrderGoods;
 import com.minimall.module.order.service.OrderService;
+import com.minimall.module.seckill.service.SeckillService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ public class AfterSaleService extends ServiceImpl<AfterSaleMapper, AfterSale> {
 
     private final OrderService orderService;
     private final GoodsService goodsService;
+    private final SeckillService seckillService;
 
     /** 申请售后 */
     public Long create(Long userId, AfterSaleCreateDTO dto) {
@@ -96,13 +98,19 @@ public class AfterSaleService extends ServiceImpl<AfterSaleMapper, AfterSale> {
         if (as == null || as.getStatus() != 0) {
             throw new BusinessException(ResultCode.ORDER_STATUS_ERROR);
         }
-        // 退款：恢复库存 + 减销量（模拟）
+        // 退款：恢复库存 + 减销量（模拟）；秒杀单回补秒杀库存
         OrderGoods og = orderService.listOrderGoods(as.getOrderId()).stream()
                 .filter(g -> g.getId().equals(as.getOrderGoodsId()))
                 .findFirst().orElse(null);
         if (og != null) {
-            goodsService.restoreStock(og.getGoodsItemId(), og.getNum());
-            goodsService.minusSales(og.getGoodsId(), og.getNum());
+            Order order = orderService.getById(as.getOrderId());
+            boolean seckill = order != null && order.getOrderType() != null && order.getOrderType() == 2;
+            if (seckill) {
+                seckillService.rollbackByItemId(og.getGoodsItemId(), og.getNum());
+            } else {
+                goodsService.restoreStock(og.getGoodsItemId(), og.getNum());
+                goodsService.minusSales(og.getGoodsId(), og.getNum());
+            }
             orderService.updateOrderGoodsAfterSale(as.getOrderGoodsId());
         }
         this.lambdaUpdate().eq(AfterSale::getId, id)

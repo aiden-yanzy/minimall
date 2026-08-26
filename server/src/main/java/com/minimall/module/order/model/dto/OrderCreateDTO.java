@@ -9,9 +9,12 @@ import lombok.Data;
 @Data
 public class OrderCreateDTO {
 
-    /** 购买方式：cart=购物车结算（用勾选项），buyNow=立即购买 */
+    /** 购买方式：cart=购物车结算（用勾选项），buyNow=立即购买，seckill=秒杀 */
     @NotBlank(message = "购买方式不能为空")
     private String buyType;
+
+    /** 秒杀时传入：秒杀商品 id */
+    private Long seckillGoodsId;
 
     /** buyNow 时传入：SKU id */
     private Long goodsItemId;

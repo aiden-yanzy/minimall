@@ -29,6 +29,7 @@
       <view class="menu-item" @click="go('/pages/coupon/mine')">我的优惠券</view>
       <view class="menu-item" @click="go('/pages/coupon/center')">领券中心</view>
       <view class="menu-item" @click="go('/pages/integral/list')">积分商城</view>
+      <view class="menu-item" @click="go('/pages/seckill/list')">限时秒杀</view>
       <view class="menu-item" @click="go('/pages/sign/sign')">每日签到</view>
     </view>
 

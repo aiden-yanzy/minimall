@@ -81,12 +81,14 @@ import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getCartList } from '@/api/cart'
 import { getGoodsDetail } from '@/api/goods'
+import { getSeckillList } from '@/api/seckill'
 import { createOrder, previewOrder } from '@/api/order'
 import { fen2yuan } from '@/utils/format'
 
 const buyType = ref('cart')
 const goodsId = ref(null)
 const goodsItemId = ref(null)
+const seckillGoodsId = ref(null)
 const num = ref(1)
 
 const contact = ref('')
@@ -110,6 +112,26 @@ const couponText = computed(() => {
 })
 
 async function init() {
+  if (buyType.value === 'seckill') {
+    const res = await getSeckillList()
+    let sg = null
+    for (const a of res.data) {
+      const f = a.goodsList.find((g) => g.id == seckillGoodsId.value)
+      if (f) { sg = f; break }
+    }
+    if (!sg) return uni.showToast({ title: '秒杀商品已失效', icon: 'none' })
+    const gd = await getGoodsDetail(sg.goodsId)
+    goodsList.value = [{
+      key: 's' + sg.id,
+      id: sg.goodsItemId,
+      name: sg.goodsName,
+      image: sg.goodsImage,
+      spec: sg.specValueStr,
+      price: sg.seckillPrice,
+      num: 1
+    }]
+    return fetchPreview()
+  }
   if (buyType.value === 'cart') {
     const res = await getCartList()
     goodsList.value = res.data
@@ -134,6 +156,7 @@ async function init() {
 
 function buildDto(couponListId) {
   const dto = { buyType: buyType.value, payType: payType.value }
+  if (seckillGoodsId.value) dto.seckillGoodsId = seckillGoodsId.value
   if (couponListId) dto.couponListId = couponListId
   if (buyType.value === 'buyNow') {
     dto.goodsItemId = goodsItemId.value
@@ -172,6 +195,7 @@ async function submit() {
       address: address.value,
       payType: payType.value
     }
+    if (seckillGoodsId.value) payload.seckillGoodsId = seckillGoodsId.value
     if (selectedCouponId.value) payload.couponListId = selectedCouponId.value
     if (buyType.value === 'buyNow') {
       payload.goodsItemId = goodsItemId.value
@@ -189,6 +213,9 @@ async function submit() {
 
 onLoad((opts) => {
   buyType.value = opts.buyType || 'cart'
+  if (buyType.value === 'seckill') {
+    seckillGoodsId.value = opts.seckillGoodsId
+  }
   if (buyType.value === 'buyNow') {
     goodsId.value = opts.goodsId
     goodsItemId.value = opts.goodsItemId

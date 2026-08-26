@@ -50,6 +50,12 @@ const router = createRouter({
           name: 'integral',
           component: () => import('@/views/integral/index.vue'),
           meta: { title: '积分商城' }
+        },
+        {
+          path: 'seckill',
+          name: 'seckill',
+          component: () => import('@/views/seckill/index.vue'),
+          meta: { title: '秒杀管理' }
         }
       ]
     }

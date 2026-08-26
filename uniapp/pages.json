@@ -59,6 +59,10 @@
     {
       "path": "pages/sign/sign",
       "style": { "navigationBarTitleText": "每日签到" }
+    },
+    {
+      "path": "pages/seckill/list",
+      "style": { "navigationBarTitleText": "限时秒杀" }
     }
   ],
   "globalStyle": {

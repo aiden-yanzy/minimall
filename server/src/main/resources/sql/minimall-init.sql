@@ -585,6 +585,48 @@ INSERT INTO `integral_goods` (`name`, `image`, `integral`, `stock`, `status`, `d
 ('限定帆布袋', '/file/demo/bag.png', 500, 50, 1, '环保材质 限量兑换'),
 ('品牌雨伞', '/file/demo/umbrella.png', 800, 30, 1, '晴雨两用');
 
+-- --------------------------------------------
+-- 8. 秒杀 (P4-b)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `seckill_activity`;
+CREATE TABLE `seckill_activity` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name`        VARCHAR(64) NOT NULL,
+  `start_time`  DATETIME NOT NULL,
+  `end_time`    DATETIME NOT NULL,
+  `status`      TINYINT NOT NULL DEFAULT 1 COMMENT '1启用 0停用',
+  `sort`        INT NOT NULL DEFAULT 0,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `delete_flag` TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='秒杀场次';
+
+DROP TABLE IF EXISTS `seckill_goods`;
+CREATE TABLE `seckill_goods` (
+  `id`             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `activity_id`    BIGINT NOT NULL,
+  `goods_id`       BIGINT NOT NULL,
+  `goods_item_id`  BIGINT NOT NULL,
+  `seckill_price`  BIGINT NOT NULL DEFAULT 0 COMMENT '秒杀价(分)',
+  `seckill_stock`  INT NOT NULL DEFAULT 0 COMMENT '秒杀库存',
+  `seckill_sales`  INT NOT NULL DEFAULT 0 COMMENT '秒杀销量',
+  `per_limit`      INT NOT NULL DEFAULT 1 COMMENT '每人限购',
+  `sort`           INT NOT NULL DEFAULT 0,
+  `create_time`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `delete_flag`    TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `idx_activity` (`activity_id`),
+  KEY `idx_item` (`goods_item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='秒杀商品';
+
+-- 演示秒杀：全天场（今天 00:00 ~ 23:59）绑定现有商品SKU
+INSERT INTO `seckill_activity` (`name`, `start_time`, `end_time`, `status`, `sort`)
+VALUES ('今日秒杀', CURDATE(), DATE_ADD(CURDATE(), INTERVAL 1 DAY), 1, 1);
+INSERT INTO `seckill_goods` (`activity_id`, `goods_id`, `goods_item_id`, `seckill_price`, `seckill_stock`, `per_limit`, `sort`)
+VALUES (1, 1, 1, 19900, 20, 1, 1);
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
