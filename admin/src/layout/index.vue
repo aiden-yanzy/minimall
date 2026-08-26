@@ -1,0 +1,83 @@
+<template>
+  <el-container class="layout">
+    <el-aside width="210px" class="aside">
+      <div class="logo">Minimall 商城</div>
+      <el-menu :default-active="route.path" router background-color="#001529" text-color="#fff" active-text-color="#409eff">
+        <el-menu-item index="/dashboard">
+          <el-icon><DataBoard /></el-icon>
+          <span>工作台</span>
+        </el-menu-item>
+      </el-menu>
+    </el-aside>
+    <el-container>
+      <el-header class="header">
+        <span class="title">{{ route.meta.title }}</span>
+        <el-dropdown @command="onCommand">
+          <span class="user">{{ auth.admin?.name || '管理员' }}</span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </el-header>
+      <el-main class="main">
+        <router-view />
+      </el-main>
+    </el-container>
+  </el-container>
+</template>
+
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { DataBoard } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/store/auth'
+
+const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
+
+onMounted(() => {
+  if (!auth.admin) auth.fetchMe()
+})
+
+function onCommand(cmd: string) {
+  if (cmd === 'logout') {
+    auth.logout()
+    router.push('/login')
+  }
+}
+</script>
+
+<style scoped lang="scss">
+.layout {
+  height: 100vh;
+}
+.aside {
+  background: #001529;
+}
+.logo {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+.main {
+  background: #f0f2f5;
+}
+.user {
+  cursor: pointer;
+  color: #333;
+}
+</style>

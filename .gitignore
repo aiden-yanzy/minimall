@@ -28,3 +28,10 @@ application-local.yml
 
 # ---- 上传文件 ----
 server/upload/
+
+# 前端依赖与产物
+admin/node_modules/
+admin/dist/
+uniapp/node_modules/
+uniapp/dist/
+uniapp/unpackage/
