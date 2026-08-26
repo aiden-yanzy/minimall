@@ -1,0 +1,197 @@
+<template>
+  <view class="wrapper">
+    <view class="status-bar" :class="'s' + order.orderStatus">
+      <view class="status-text">{{ statusText }}</view>
+    </view>
+
+    <view class="section addr">
+      <view class="a-line">收货人：{{ order.contact }} {{ order.mobile }}</view>
+      <view class="a-line">地址：{{ order.address }}</view>
+    </view>
+
+    <view class="section">
+      <view v-for="g in order.goodsList" :key="g.goodsItemId" class="g-item">
+        <image class="img" :src="g.goodsImage" mode="aspectFill" />
+        <view class="g-info">
+          <view class="g-name">{{ g.goodsName }}</view>
+          <view class="g-spec">{{ g.specValueStr }}</view>
+        </view>
+        <view class="g-right">
+          <view>￥{{ fen2yuan(g.price) }}</view>
+          <view class="g-num">x{{ g.num }}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="amount-row"><text>商品金额</text><text>￥{{ fen2yuan(order.totalAmount) }}</text></view>
+      <view class="amount-row"><text>运费</text><text>￥{{ fen2yuan(order.freightAmount) }}</text></view>
+      <view class="amount-row"><text>优惠</text><text>-￥{{ fen2yuan(order.discountAmount) }}</text></view>
+      <view class="amount-row total"><text>实付金额</text><text class="red">￥{{ fen2yuan(order.payAmount) }}</text></view>
+      <view class="amount-row" v-if="order.expressNo"><text>物流单号</text><text>{{ order.expressName || '' }} {{ order.expressNo }}</text></view>
+      <view class="amount-row"><text>订单编号</text><text class="copy" @click="copy(order.orderSn)">{{ order.orderSn }}</text></view>
+    </view>
+
+    <view v-if="order.orderStatus === 0" class="action-bar">
+      <view class="btn" @click="cancel">取消订单</view>
+      <view class="btn primary" @click="pay">立即支付</view>
+    </view>
+    <view v-if="order.orderStatus === 2" class="action-bar">
+      <view class="btn primary" @click="confirmReceive">确认收货</view>
+    </view>
+  </view>
+</template>
+
+<script setup>
+import { computed, ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import { getOrderDetail, cancelOrder, mockPay } from '@/api/order'
+import { fen2yuan } from '@/utils/format'
+
+const order = ref({})
+const id = ref(null)
+
+const statusMap = {
+  0: '待支付', 1: '待发货', 2: '待收货', 3: '已完成', 4: '已取消'
+}
+const statusText = computed(() => statusMap[order.value.orderStatus] || '未知')
+
+async function load() {
+  const res = await getOrderDetail(id.value)
+  order.value = res.data
+}
+
+async function cancel() {
+  await confirmModal('确定取消该订单？', async () => {
+    await cancelOrder(id.value, '用户取消')
+    uni.showToast({ title: '已取消' })
+    load()
+  })
+}
+async function pay() {
+  await mockPay(order.value.orderSn, order.value.payType)
+  uni.showToast({ title: '支付成功' })
+  load()
+}
+async function confirmReceive() {
+  uni.showToast({ title: '已确认收货（P2实现）', icon: 'none' })
+}
+
+function copy(text) {
+  uni.setClipboardData({ data: text })
+}
+function confirmModal(title, fn) {
+  uni.showModal({ title: '提示', content: title, success: (r) => r.confirm && fn() })
+}
+
+onLoad((o) => {
+  id.value = o.id
+  load()
+})
+</script>
+
+<style scoped>
+.wrapper {
+  padding: 20rpx;
+  background: #f5f5f5;
+  min-height: 100vh;
+  padding-bottom: 140rpx;
+}
+.status-bar {
+  border-radius: 16rpx;
+  padding: 50rpx 30rpx;
+  color: #fff;
+  margin-bottom: 16rpx;
+}
+.status-bar.s0 { background: #ff9900; }
+.status-bar.s1 { background: #3370ff; }
+.status-bar.s2 { background: #00b578; }
+.status-bar.s3 { background: #07c160; }
+.status-bar.s4 { background: #bbb; }
+.status-text {
+  font-size: 40rpx;
+  font-weight: bold;
+}
+.section {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+}
+.a-line {
+  font-size: 26rpx;
+  margin-bottom: 8rpx;
+  color: #333;
+}
+.g-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+.img {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 10rpx;
+  background: #f0f0f0;
+}
+.g-info {
+  flex: 1;
+  margin-left: 16rpx;
+}
+.g-name {
+  font-size: 26rpx;
+}
+.g-spec {
+  color: #999;
+  font-size: 22rpx;
+  margin-top: 6rpx;
+}
+.g-right {
+  text-align: right;
+}
+.g-num {
+  color: #999;
+  margin-top: 10rpx;
+}
+.amount-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10rpx 0;
+  color: #333;
+  font-size: 26rpx;
+}
+.amount-row.total {
+  font-weight: bold;
+  border-top: 1rpx solid #f0f0f0;
+  margin-top: 8rpx;
+  padding-top: 16rpx;
+}
+.red {
+  color: #ff2d2d;
+}
+.copy {
+  color: #3370ff;
+}
+.action-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  display: flex;
+  justify-content: flex-end;
+  gap: 20rpx;
+  padding: 16rpx 20rpx;
+}
+.btn {
+  border: 1rpx solid #ddd;
+  border-radius: 40rpx;
+  padding: 18rpx 40rpx;
+  color: #333;
+}
+.btn.primary {
+  background: #ff2d2d;
+  border-color: #ff2d2d;
+  color: #fff;
+}
+</style>
