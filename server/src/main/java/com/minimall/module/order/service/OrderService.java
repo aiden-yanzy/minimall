@@ -206,12 +206,78 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
                 .update();
     }
 
-    /** 后台订单分页 */
-    public List<Order> adminList(Integer status, String orderSn) {
+    /** 后台订单分页（含商品） */
+    public List<OrderVO> adminList(Integer status, String orderSn) {
         return this.lambdaQuery()
                 .eq(status != null, Order::getOrderStatus, status)
                 .like(orderSn != null, Order::getOrderSn, orderSn)
                 .orderByDesc(Order::getId)
-                .list();
+                .list()
+                .stream().map(o -> {
+                    OrderVO vo = OrderVO.from(o);
+                    vo.setGoodsList(loadGoods(o.getId()));
+                    return vo;
+                }).collect(Collectors.toList());
+    }
+
+    /** 确认收货 */
+    public void confirmReceive(Long userId, Long orderId) {
+        Order order = this.getById(orderId);
+        if (order == null || !order.getUserId().equals(userId)) {
+            throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
+        }
+        if (order.getOrderStatus() != 2) {
+            throw new BusinessException(ResultCode.ORDER_STATUS_ERROR);
+        }
+        this.lambdaUpdate().eq(Order::getId, orderId)
+                .set(Order::getOrderStatus, 3)
+                .set(Order::getReceiveTime, LocalDateTime.now())
+                .update();
+    }
+
+    /** 后台发货 */
+    public void deliver(Long orderId, Long expressId, String expressName, String expressNo) {
+        Order order = this.getById(orderId);
+        if (order == null) throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
+        if (order.getOrderStatus() != 1) {
+            throw new BusinessException(ResultCode.ORDER_STATUS_ERROR);
+        }
+        this.lambdaUpdate().eq(Order::getId, orderId)
+                .set(Order::getOrderStatus, 2)
+                .set(Order::getExpressId, expressId)
+                .set(Order::getExpressName, expressName)
+                .set(Order::getExpressNo, expressNo)
+                .set(Order::getDeliveryTime, LocalDateTime.now())
+                .update();
+    }
+
+    /** 订单商品行（供售后使用） */
+    public List<OrderGoods> listOrderGoods(Long orderId) {
+        return orderGoodsMapper.selectList(Wrappers.<OrderGoods>lambdaQuery().eq(OrderGoods::getOrderId, orderId));
+    }
+
+    /** 校验订单归属，返回订单 */
+    public Order checkOwnerOrder(Long userId, Long orderId) {
+        Order order = this.getById(orderId);
+        if (order == null || !order.getUserId().equals(userId)) {
+            throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
+        }
+        return order;
+    }
+
+    /** 订单行归属校验 */
+    public OrderGoods checkOwnerOrderGoods(Long orderId, Long orderGoodsId) {
+        OrderGoods og = orderGoodsMapper.selectById(orderGoodsId);
+        if (og == null || !og.getOrderId().equals(orderId)) {
+            throw new BusinessException("订单商品不存在");
+        }
+        return og;
+    }
+
+    /** 标记订单商品已售后 */
+    public void updateOrderGoodsAfterSale(Long orderGoodsId) {
+        orderGoodsMapper.update(null, Wrappers.<OrderGoods>lambdaUpdate()
+                .eq(OrderGoods::getId, orderGoodsId)
+                .set(OrderGoods::getIsAfterSale, 1));
     }
 }

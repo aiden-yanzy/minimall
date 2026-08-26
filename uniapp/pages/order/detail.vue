@@ -46,6 +46,7 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getOrderDetail, cancelOrder, mockPay } from '@/api/order'
+import { post } from '@/api/request'
 import { fen2yuan } from '@/utils/format'
 
 const order = ref({})
@@ -74,7 +75,11 @@ async function pay() {
   load()
 }
 async function confirmReceive() {
-  uni.showToast({ title: '已确认收货（P2实现）', icon: 'none' })
+  await confirmModal('确认已收到货？', async () => {
+    await post('/shop/order/' + order.value.id + '/receive')
+    uni.showToast({ title: '已确认收货' })
+    load()
+  })
 }
 
 function copy(text) {

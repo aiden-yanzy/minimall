@@ -31,10 +31,12 @@ public class OrderVO {
     private String expressName;
     private String expressNo;
     private LocalDateTime createTime;
+    private LocalDateTime receiveTime;
     private List<OrderGoodsVO> goodsList;
 
     @Data
     public static class OrderGoodsVO {
+        private Long id;
         private Long goodsId;
         private Long goodsItemId;
         private String goodsName;
@@ -43,9 +45,11 @@ public class OrderVO {
         private Long price;
         private Integer num;
         private Long totalPrice;
+        private Integer isAfterSale;
 
         public static OrderGoodsVO from(OrderGoods g) {
             OrderGoodsVO vo = new OrderGoodsVO();
+            vo.setId(g.getId());
             vo.setGoodsId(g.getGoodsId());
             vo.setGoodsItemId(g.getGoodsItemId());
             vo.setGoodsName(g.getGoodsName());
@@ -54,6 +58,7 @@ public class OrderVO {
             vo.setPrice(g.getPrice());
             vo.setNum(g.getNum());
             vo.setTotalPrice(g.getTotalPrice());
+            vo.setIsAfterSale(g.getIsAfterSale());
             return vo;
         }
     }
@@ -78,6 +83,7 @@ public class OrderVO {
         vo.setExpressName(o.getExpressName());
         vo.setExpressNo(o.getExpressNo());
         vo.setCreateTime(o.getCreateTime());
+        vo.setReceiveTime(o.getReceiveTime());
         return vo;
     }
 }

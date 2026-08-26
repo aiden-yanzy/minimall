@@ -57,4 +57,11 @@ public class OrderController {
         orderService.cancel(userService.getCurrentUserId(), id, reason);
         return R.ok();
     }
+
+    @Operation(summary = "确认收货")
+    @PostMapping("/{id}/receive")
+    public R<Void> receive(@PathVariable Long id) {
+        orderService.confirmReceive(userService.getCurrentUserId(), id);
+        return R.ok("确认收货成功", null);
+    }
 }

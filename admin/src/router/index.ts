@@ -26,6 +26,18 @@ const router = createRouter({
           name: 'goods',
           component: () => import('@/views/goods/list.vue'),
           meta: { title: '商品管理' }
+        },
+        {
+          path: 'order',
+          name: 'order',
+          component: () => import('@/views/order/list.vue'),
+          meta: { title: '订单管理' }
+        },
+        {
+          path: 'after',
+          name: 'after',
+          component: () => import('@/views/order/after.vue'),
+          meta: { title: '售后管理' }
         }
       ]
     }
