@@ -29,8 +29,19 @@ docker compose up -d --build       # 启动 mysql / redis / server
 
 ## 前端
 - **后台 admin**：`cd admin && npm i && npm run dev`（默认 http://localhost:5173，代理到 8080）
-- **C 端 uniapp**：用 HBuilderX 打开 `uniapp/` 目录 → 运行到浏览器(H5) / 微信开发者工具
-  - 后端地址在 `uniapp/api/config.js` 的 `baseUrl` 修改（真机/小程序改局域网 IP）
+
+- **C 端 uniapp（CLI 标准工程，源码在 `src/`）**：
+  ```bash
+  cd uniapp && npm i
+  npm run dev:h5        # H5 开发（http://localhost:5174，同源代理到后端）
+  npm run build:h5      # 产物在 dist/build/h5，已自动部署到 nginx
+  npm run dev:mp-weixin # 微信小程序（配合微信开发者工具）
+  ```
+  - 小程序 / 真机调试时，把 `uniapp/src/api/config.js` 的 `baseUrl` 改为后端地址
+  - 也可用 HBuilderX：导入 `uniapp/` 目录前，先新建一个 uni-app(Vue3) 空项目让 HBuilderX 正确识别工程类型，再把源码覆盖进去（HBuilderX 对直接导入的普通目录可能识别为 Web 工程）
+
+- **nginx 网关（docker compose 起）**：http://localhost:8081
+  - `/` H5 商城（由 uniapp H5 构建产物提供）· `/admin-web/` 后台 · `/shop /admin /pay` 反代后端 · `/file/` 上传文件
 
 ## 功能地图（完整对标，已全部落地）
 

@@ -35,3 +35,7 @@ admin/dist/
 uniapp/node_modules/
 uniapp/dist/
 uniapp/unpackage/
+# uniapp CLI 依赖/产物
+uniapp/node_modules/
+uniapp/dist/
+uniapp/src/unpackage/
