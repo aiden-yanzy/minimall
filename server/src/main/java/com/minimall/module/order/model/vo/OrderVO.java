@@ -48,6 +48,7 @@ public class OrderVO {
         private Integer num;
         private Long totalPrice;
         private Integer isAfterSale;
+        private Integer isComment;
 
         public static OrderGoodsVO from(OrderGoods g) {
             OrderGoodsVO vo = new OrderGoodsVO();
@@ -61,6 +62,7 @@ public class OrderVO {
             vo.setNum(g.getNum());
             vo.setTotalPrice(g.getTotalPrice());
             vo.setIsAfterSale(g.getIsAfterSale());
+            vo.setIsComment(g.getIsComment());
             return vo;
         }
     }

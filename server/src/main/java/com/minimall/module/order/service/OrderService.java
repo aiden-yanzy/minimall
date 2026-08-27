@@ -51,6 +51,7 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
     private final UserService userService;
     private final SeckillService seckillService;
     private final DistributionService distributionService;
+    private final com.minimall.module.user.mapper.UserAddressMapper userAddressMapper;
 
     /** 内部结算行 */
     private static class Line {
@@ -86,9 +87,17 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
                 throw new BusinessException(ResultCode.GOODS_OFF_SHELF);
             }
         }
-        // 收货信息必填
-        if (cn.hutool.core.util.StrUtil.isBlank(dto.getContact()) || cn.hutool.core.util.StrUtil.isBlank(dto.getMobile())
-                || cn.hutool.core.util.StrUtil.isBlank(dto.getAddress())) {
+        // 收货信息：优先地址簿，否则手填必填
+        String contact = dto.getContact(), mobile = dto.getMobile(), address = dto.getAddress();
+        if (dto.getAddressId() != null) {
+            var addr = userAddressMapper.selectById(dto.getAddressId());
+            if (addr == null || !addr.getUserId().equals(userId)) throw new BusinessException("收货地址不存在");
+            contact = addr.getContact();
+            mobile = addr.getMobile();
+            address = addr.getAddress();
+        }
+        if (cn.hutool.core.util.StrUtil.isBlank(contact) || cn.hutool.core.util.StrUtil.isBlank(mobile)
+                || cn.hutool.core.util.StrUtil.isBlank(address)) {
             if (seckillGoods != null) seckillService.rollback(seckillGoods.getId(), dto.getNum());
             throw new BusinessException(ResultCode.PARAM_ERROR.getCode(), "请填写完整收货信息");
         }
@@ -113,9 +122,9 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         order.setCouponAmount(promo.couponAmount);
         order.setPayAmount(promo.payAmount);
         order.setRemark(dto.getRemark());
-        order.setContact(dto.getContact());
-        order.setMobile(dto.getMobile());
-        order.setAddress(dto.getAddress());
+        order.setContact(contact);
+        order.setMobile(mobile);
+        order.setAddress(address);
         order.setDeliveryType(1);
         this.save(order);
 

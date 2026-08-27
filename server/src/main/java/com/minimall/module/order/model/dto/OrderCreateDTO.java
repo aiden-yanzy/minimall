@@ -32,6 +32,9 @@ public class OrderCreateDTO {
     /** 使用的用户优惠券 id（可选） */
     private Long couponListId;
 
+    /** 地址簿 id（可选，优先于手填地址） */
+    private Long addressId;
+
     /** 支付方式：1微信 2支付宝 3余额 */
     private Integer payType = 1;
 }
