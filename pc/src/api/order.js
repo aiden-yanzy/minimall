@@ -1,0 +1,9 @@
+import http from './http'
+export const previewOrder = (data) => http.post('/shop/order/preview', data)
+export const createOrder = (data) => http.post('/shop/order/create', data)
+export const getOrderList = (status) => http.get('/shop/order', { params: { status } })
+export const getOrderDetail = (id) => http.get('/shop/order/' + id)
+export const cancelOrder = (id, reason) => http.post(`/shop/order/${id}/cancel?reason=${reason || ''}`)
+export const mockPay = (orderSn, payType) => http.post('/shop/pay/mock', { orderSn, payType })
+export const receive = (id) => http.post(`/shop/order/${id}/receive`)
+export const getCoupons = () => http.get('/shop/coupon/mine', { params: { status: 0 } })

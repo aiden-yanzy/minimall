@@ -40,8 +40,11 @@ docker compose up -d --build       # 启动 mysql / redis / server
   - 小程序 / 真机调试时，把 `uniapp/src/api/config.js` 的 `baseUrl` 改为后端地址
   - 也可用 HBuilderX：导入 `uniapp/` 目录前，先新建一个 uni-app(Vue3) 空项目让 HBuilderX 正确识别工程类型，再把源码覆盖进去（HBuilderX 对直接导入的普通目录可能识别为 Web 工程）
 
+- **PC 商城端（Vue3 + Element Plus 宽屏版）**：`cd pc && npm i && npm run dev`(5175) / `npm run build` 部署至 nginx
+  - 页面：首页/商品列表(分类+排序)/商品详情/购物车/下单/订单；同源走 nginx 或 vite 代理
 - **nginx 网关（docker compose 起）**：http://localhost:8081
-  - `/` H5 商城（由 uniapp H5 构建产物提供）· `/admin-web/` 后台 · `/shop /admin /pay` 反代后端 · `/file/` 上传文件
+  - `/` H5 商城（uniapp 构建产物）· `/pc/` PC 商城 · `/admin-web/` 后台 · `/shop /admin /pay` 反代后端 · `/file/` 上传文件
+  - 演示数据（10 商品/首页轮播/评价）：`./scripts/setup-demo.sh` 一键灌入
 
 ## 功能地图（完整对标，已全部落地）
 
