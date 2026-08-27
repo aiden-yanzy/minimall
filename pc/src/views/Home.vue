@@ -25,13 +25,13 @@
 </template>
 
 <script setup>
-import { onMounted, reactive } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getGoodsList, getCategoryTree, getHomeDecorate } from '@/api/goods'
 
 const router = useRouter()
-const goods = []
-const cats = []
+const goods = ref([])
+const cats = ref([])
 const decorate = reactive({ banners: [], navs: [], goodsTitle: '' })
 const fen2yuan = (f) => (f / 100).toFixed(2)
 

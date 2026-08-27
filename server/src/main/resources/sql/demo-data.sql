@@ -1,9 +1,14 @@
--- 分类
-INSERT INTO goods_category (name,pid,level,sort,is_show) VALUES
-('服饰',0,1,2,1),('食品',0,1,3,1),('美妆',0,1,4,1),('家居',0,1,5,1);
+-- 分类（幂等：已存在则跳过）
+INSERT INTO goods_category (name,pid,level,sort,is_show)
+SELECT name,pid,level,sort,is_show FROM (
+  SELECT '服饰' name,0 pid,1 level,2 sort,1 is_show UNION ALL
+  SELECT '食品',0,1,3,1 UNION ALL
+  SELECT '美妆',0,1,4,1 UNION ALL
+  SELECT '家居',0,1,5,1
+) t WHERE NOT EXISTS (SELECT 1 FROM goods_category g WHERE g.name=t.name LIMIT 1);
 
 -- 商品 SPU (id 2..10)
-INSERT INTO goods (id,name,subtitle,category_id,image,market_price,min_price,max_price,stock,sales,virtual_sales,content,spec_type,status,recommend,is_show,sort,refund_type) VALUES
+INSERT IGNORE INTO goods (id,name,subtitle,category_id,image,market_price,min_price,max_price,stock,sales,virtual_sales,content,spec_type,status,recommend,is_show,sort,refund_type) VALUES
 (2,'简约纯棉T恤','100%棉 亲肤透气',2,'/file/demo/demo2.svg',12900,9900,9900,200,86,300,'<p>新疆长绒棉，经典圆领，多色可选。</p>',0,1,1,1,1,1),
 (3,'复古直筒牛仔裤','宽松显瘦 经典水洗',2,'/file/demo/demo3.svg',25900,19900,19900,120,45,200,'<p>重磅丹宁，直筒剪裁，四季百搭。</p>',0,1,0,1,2,1),
 (4,'轻薄羽绒服','90绒 轻若无物',2,'/file/demo/demo4.svg',39900,29900,29900,80,23,150,'<p>高蓬松度白鸭绒，可收纳便携。</p>',0,1,1,1,3,1),
@@ -15,7 +20,7 @@ INSERT INTO goods (id,name,subtitle,category_id,image,market_price,min_price,max
 (10,'记忆棉护颈枕','慢回弹 深度睡眠',5,'/file/demo/demo10.svg',29900,19900,19900,70,19,90,'<p>人体工学曲线，透气枕套可拆洗。</p>',0,1,0,1,9,1);
 
 -- SKU（单规格）
-INSERT INTO goods_item (goods_id,item_sn,image,price,cost_price,market_price,stock,sales,spec_value_ids,spec_value_str,status) VALUES
+INSERT IGNORE INTO goods_item (goods_id,item_sn,image,price,cost_price,market_price,stock,sales,spec_value_ids,spec_value_str,status) VALUES
 (2,'SKU-0201','',9900,5000,12900,200,86,'','标准码',1),
 (3,'SKU-0301','',19900,9000,25900,120,45,'','28-34码',1),
 (4,'SKU-0401','',29900,15000,39900,80,23,'','S-XL',1),
@@ -27,13 +32,13 @@ INSERT INTO goods_item (goods_id,item_sn,image,price,cost_price,market_price,sto
 (10,'SKU-1001','',19900,8000,29900,70,19,'','标准款',1);
 
 -- 轮播图
-INSERT INTO goods_image (goods_id,url,sort) VALUES
+INSERT IGNORE INTO goods_image (goods_id,url,sort) VALUES
 (2,'/file/demo/demo2.svg',0),(3,'/file/demo/demo3.svg',0),(4,'/file/demo/demo4.svg',0),
 (5,'/file/demo/demo5.svg',0),(6,'/file/demo/demo6.svg',0),(7,'/file/demo/demo7.svg',0),
 (8,'/file/demo/demo8.svg',0),(9,'/file/demo/demo9.svg',0),(10,'/file/demo/demo10.svg',0);
 
 -- 评价
-INSERT INTO goods_comment (order_id,order_goods_id,user_id,goods_id,goods_item_id,score,description_score,service_score,content,is_show) VALUES
+INSERT IGNORE INTO goods_comment (order_id,order_goods_id,user_id,goods_id,goods_item_id,score,description_score,service_score,content,is_show) VALUES
 (0,0,1,1,1,5,5,5,'音质很棒，降噪效果满意，续航给力！',1),
 (0,0,2,1,1,4,4,5,'东西不错，物流也挺快，就是白色不耐脏哈哈。',1),
 (0,0,4,2,2,5,5,5,'面料很舒服，尺码标准，推荐！',1),
