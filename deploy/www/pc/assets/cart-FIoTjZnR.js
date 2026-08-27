@@ -1,1 +1,0 @@
-import{y as s}from"./index-Dl3pM60_.js";const o=t=>s.post("/shop/cart",t),r=()=>s.get("/shop/cart"),c=(t,a)=>s.put(`/shop/cart/num/${t}?num=${a}`),p=(t,a)=>s.put(`/shop/cart/selected/${t}?selected=${a}`),d=t=>s.delete("/shop/cart/"+t);export{o as a,c as b,r as g,d as r,p as u};

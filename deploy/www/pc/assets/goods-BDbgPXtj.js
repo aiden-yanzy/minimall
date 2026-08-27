@@ -1,0 +1,1 @@
+import{y as o}from"./index-CAkRBMYU.js";const s=()=>o.get("/shop/goods/category"),g=t=>o.get("/shop/goods",{params:t}),a=t=>o.get("/shop/goods/"+t),c=()=>o.get("/shop/decorate/home");export{s as a,g as b,a as c,c as g};
