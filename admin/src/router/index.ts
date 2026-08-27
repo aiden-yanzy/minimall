@@ -28,6 +28,12 @@ const router = createRouter({
           meta: { title: '商品管理' }
         },
         {
+          path: 'comments',
+          name: 'comments',
+          component: () => import('@/views/goods/comments.vue'),
+          meta: { title: '评价管理' }
+        },
+        {
           path: 'order',
           name: 'order',
           component: () => import('@/views/order/list.vue'),

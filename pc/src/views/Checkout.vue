@@ -2,10 +2,29 @@
   <div class="checkout">
     <h2>确认订单</h2>
     <el-form label-width="80px" class="addr">
-      <el-form-item label="收货人"><el-input v-model="contact" placeholder="姓名" style="width:200px" /></el-form-item>
-      <el-form-item label="手机号"><el-input v-model="mobile" placeholder="手机号" style="width:200px" /></el-form-item>
-      <el-form-item label="地址"><el-input v-model="address" placeholder="详细地址" style="width:400px" /></el-form-item>
+      <el-form-item label="收货地址">
+        <el-select v-model="addressId" style="width:300px" placeholder="选择地址" @change="applyAddress">
+          <el-option v-for="a in addressList" :key="a.id" :label="a.contact + ' ' + a.mobile + ' · ' + a.address" :value="a.id" />
+        </el-select>
+        <el-button link type="primary" style="margin-left:8px" @click="openAdd">+ 新增地址</el-button>
+      </el-form-item>
+      <el-form-item v-if="addressId">
+        <span>{{ contact }} · {{ mobile }} · {{ address }}</span>
+      </el-form-item>
     </el-form>
+
+    <el-dialog v-model="addDialog" title="新增收货地址" width="420px">
+      <el-form label-width="70px">
+        <el-form-item label="收货人"><el-input v-model="newAddr.contact" /></el-form-item>
+        <el-form-item label="手机号"><el-input v-model="newAddr.mobile" /></el-form-item>
+        <el-form-item label="详细地址"><el-input v-model="newAddr.address" /></el-form-item>
+        <el-form-item label="默认"><el-switch v-model="newAddr.isDefault" :active-value="1" :inactive-value="0" /></el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="addDialog = false">取消</el-button>
+        <el-button type="primary" @click="saveNewAddr">保存</el-button>
+      </template>
+    </el-dialog>
 
     <el-table :data="goodsList" style="margin:0 24px">
       <el-table-column label="商品">
@@ -40,7 +59,9 @@ import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getGoodsDetail } from '@/api/goods'
 import { getCartList } from '@/api/cart'
+import { getAddresses, saveAddress } from '@/api/member'
 import { previewOrder, createOrder } from '@/api/order'
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
@@ -53,10 +74,46 @@ const contact = ref('')
 const mobile = ref('')
 const address = ref('')
 const submitting = ref(false)
+const addressList = ref([])
+const addressId = ref(null)
+const addDialog = ref(false)
+const newAddr = ref({ contact: '', mobile: '', address: '', isDefault: 0 })
 const fen2yuan = (f) => (f / 100).toFixed(2)
 
+async function loadAddresses() {
+  const res = await getAddresses()
+  addressList.value = res.data
+  if (addressList.value.length) {
+    addressId.value = (addressList.value.find((a) => a.isDefault === 1) || addressList.value[0]).id
+    applyAddress()
+  }
+}
+function applyAddress() {
+  const a = addressList.value.find((x) => x.id === addressId.value)
+  if (a) { contact.value = a.contact; mobile.value = a.mobile; address.value = a.address }
+}
+function openAdd() {
+  Object.assign(newAddr, { contact: '', mobile: '', address: '', isDefault: 0 })
+  addDialog.value = true
+}
+async function saveNewAddr() {
+  if (!newAddr.value.contact || !newAddr.value.mobile || !newAddr.value.address) return ElMessage.warning('请填写完整')
+  const res = await saveAddress({ ...newAddr.value, isDefault: newAddr.value.isDefault ? 1 : 0 })
+  addDialog.value = false
+  await loadAddresses()
+  addressId.value = res.data
+  applyAddress()
+  fetchPreview()
+}
+
 function buildDto() {
-  const dto = { buyType: buyType.value, contact: contact.value, mobile: mobile.value, address: address.value }
+  const dto = {
+    buyType: buyType.value,
+    addressId: addressId.value,
+    contact: contact.value,
+    mobile: mobile.value,
+    address: address.value
+  }
   if (couponListId.value) dto.couponListId = couponListId.value
   if (buyType.value === 'buyNow') {
     dto.goodsItemId = Number(route.query.goodsItemId)
@@ -66,6 +123,7 @@ function buildDto() {
 }
 
 async function init() {
+  await loadAddresses()
   if (buyType.value === 'cart') {
     const res = await getCartList()
     goodsList.value = res.data.filter((i) => i.isSelected === 1)
@@ -84,7 +142,7 @@ async function fetchPreview() {
 }
 
 async function submit() {
-  if (!contact.value || !mobile.value || !address.value) return
+  if (!addressId.value) return ElMessage.warning('请先选择收货地址')
   submitting.value = true
   try {
     const dto = buildDto()

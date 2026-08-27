@@ -11,6 +11,10 @@
           <el-icon><Goods /></el-icon>
           <span>商品管理</span>
         </el-menu-item>
+        <el-menu-item index="/comments">
+          <el-icon><Goods /></el-icon>
+          <span>评价管理</span>
+        </el-menu-item>
         <el-menu-item index="/order">
           <el-icon><Tickets /></el-icon>
           <span>订单管理</span>

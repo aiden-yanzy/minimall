@@ -2,11 +2,19 @@
   <view class="confirm">
     <view class="section">
       <view class="addr-title">收货信息</view>
-      <view class="addr-row">
-        <input v-model="contact" class="ipt" placeholder="收货人" />
-        <input v-model="mobile" class="ipt" type="number" placeholder="手机号" />
+      <view v-if="selectedAddr" class="addr-card" @click="chooseAddress">
+        <view class="addr-line">{{ selectedAddr.contact }} {{ selectedAddr.mobile }} <text v-if="selectedAddr.isDefault === 1" class="def-tag">默认</text></view>
+        <view class="addr-line2">{{ selectedAddr.address }}</view>
+        <view class="change">切换地址</view>
       </view>
-      <input v-model="address" class="ipt full" placeholder="详细地址" />
+      <template v-else>
+        <view class="addr-row">
+          <input v-model="contact" class="ipt" placeholder="收货人" />
+          <input v-model="mobile" class="ipt" type="number" placeholder="手机号" />
+        </view>
+        <input v-model="address" class="ipt full" placeholder="详细地址" />
+        <view class="change" @click="chooseAddress">从地址簿选择</view>
+      </template>
     </view>
 
     <view class="section">
@@ -78,10 +86,11 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { getCartList } from '@/api/cart'
 import { getGoodsDetail } from '@/api/goods'
 import { getSeckillList } from '@/api/seckill'
+import { getDefaultAddress } from '@/api/member'
 import { createOrder, previewOrder } from '@/api/order'
 import { fen2yuan } from '@/utils/format'
 
@@ -94,6 +103,7 @@ const num = ref(1)
 const contact = ref('')
 const mobile = ref('')
 const address = ref('')
+const selectedAddr = ref(null)
 const goodsList = ref([])
 const payType = ref(1)
 const showPay = ref(false)
@@ -112,6 +122,10 @@ const couponText = computed(() => {
 })
 
 async function init() {
+  try {
+    const d = await getDefaultAddress()
+    if (d.data && d.data.id) selectedAddr.value = d.data
+  } catch (e) {}
   if (buyType.value === 'seckill') {
     const res = await getSeckillList()
     let sg = null
@@ -183,6 +197,11 @@ async function selectCoupon(c) {
 }
 
 async function submit() {
+  if (selectedAddr.value) {
+    contact.value = selectedAddr.value.contact
+    mobile.value = selectedAddr.value.mobile
+    address.value = selectedAddr.value.address
+  }
   if (!contact.value || !mobile.value || !address.value) {
     return uni.showToast({ title: '请填写完整收货信息', icon: 'none' })
   }
@@ -190,6 +209,7 @@ async function submit() {
   try {
     const payload = {
       buyType: buyType.value,
+      addressId: selectedAddr.value ? selectedAddr.value.id : null,
       contact: contact.value,
       mobile: mobile.value,
       address: address.value,
@@ -211,6 +231,10 @@ async function submit() {
   }
 }
 
+function chooseAddress() {
+  uni.navigateTo({ url: '/pages/member/address?choose=1' })
+}
+
 onLoad((opts) => {
   buyType.value = opts.buyType || 'cart'
   if (buyType.value === 'seckill') {
@@ -222,6 +246,15 @@ onLoad((opts) => {
     num.value = parseInt(opts.num) || 1
   }
   init()
+})
+
+onShow(() => {
+  // 从地址簿选中返回
+  const a = uni.getStorageSync('selectedAddress')
+  if (a && a.id) {
+    selectedAddr.value = a
+    uni.removeStorageSync('selectedAddress')
+  }
 })
 </script>
 
@@ -239,6 +272,11 @@ onLoad((opts) => {
   margin-bottom: 16rpx;
 }
 .addr-title { font-weight: bold; margin-bottom: 16rpx; }
+.addr-card { background: #fff8f0; border-radius: 10rpx; padding: 20rpx; }
+.addr-line { font-weight: bold; }
+.addr-line2 { color: #666; font-size: 24rpx; margin-top: 6rpx; }
+.def-tag { font-size: 20rpx; color: #ff2d2d; border: 1rpx solid #ff2d2d; border-radius: 6rpx; padding: 0 8rpx; }
+.change { color: #3370ff; font-size: 24rpx; margin-top: 12rpx; }
 .addr-row { display: flex; gap: 16rpx; }
 .ipt {
   flex: 1;

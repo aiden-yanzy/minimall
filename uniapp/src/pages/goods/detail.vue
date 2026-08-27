@@ -14,10 +14,25 @@
       </view>
       <view class="name">{{ goods.name }}</view>
       <view class="subtitle" v-if="goods.subtitle">{{ goods.subtitle }}</view>
+      <view class="collect" :class="{ on: collected }" @click="onToggleCollect">{{ collected ? '已收藏 ♥' : '收藏 ♡' }}</view>
     </view>
 
     <view class="section" v-if="goods.content">
       <rich-text :nodes="goods.content" />
+    </view>
+
+    <!-- 评价列表 -->
+    <view class="section">
+      <view class="sec-title">用户评价（{{ commentTotal }}）</view>
+      <view v-for="c in comments" :key="c.id" class="comment">
+        <view class="c-head">
+          <text class="c-name">{{ c.nickname }}</text>
+          <text class="c-score">★ {{ c.score }}.0</text>
+        </view>
+        <view class="c-content">{{ c.content }}</view>
+        <view class="c-reply" v-if="c.reply">商家回复：{{ c.reply }}</view>
+      </view>
+      <view v-if="!comments.length" class="no-comment">暂无评价</view>
     </view>
 
     <!-- 底部操作栏 -->
@@ -66,6 +81,8 @@ import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getGoodsDetail } from '@/api/goods'
 import { addCart } from '@/api/cart'
+import { getComments, toggleCollect as toggleCollectApi, collectStatus } from '@/api/member'
+import { useUserStore } from '@/store/user'
 import { fen2yuan } from '@/utils/format'
 
 const goods = ref({})
@@ -76,6 +93,10 @@ const selStock = ref(0)
 const qty = ref(1)
 const showSpec = ref(false)
 const action = ref('cart')
+const collected = ref(false)
+const comments = ref([])
+const commentTotal = ref(0)
+const userStore = useUserStore()
 
 async function load(id) {
   const res = await getGoodsDetail(id)
@@ -84,6 +105,26 @@ async function load(id) {
   if (res.data.items && res.data.items.length) {
     selectItem(res.data.items[0])
   }
+  loadComments(id)
+  if (userStore.token) {
+    const s = await collectStatus(id)
+    collected.value = s.data
+  }
+}
+
+async function loadComments(goodsId) {
+  const res = await getComments(goodsId, 1)
+  comments.value = res.data.records
+  commentTotal.value = res.data.total
+}
+
+async function onToggleCollect() {
+  if (!userStore.token) return uni.navigateTo({ url: '/pages/user/login' })
+  try {
+    const res = await toggleCollectApi(goods.value.id)
+    collected.value = res.data
+    uni.showToast({ title: res.data ? '收藏成功' : '已取消收藏' })
+  } catch (e) {}
 }
 
 function selectItem(it) {
@@ -165,6 +206,16 @@ onLoad((opts) => load(opts.id))
   color: #999;
   font-size: 26rpx;
 }
+.collect { color: #999; font-size: 24rpx; text-align: right; }
+.collect.on { color: #ff2d2d; }
+.sec-title { font-weight: bold; margin-bottom: 16rpx; }
+.comment { padding: 16rpx 0; border-bottom: 1rpx solid #f5f5f5; }
+.c-head { display: flex; justify-content: space-between; }
+.c-name { color: #333; }
+.c-score { color: #ffb400; }
+.c-content { color: #666; margin-top: 8rpx; font-size: 26rpx; }
+.c-reply { color: #999; font-size: 24rpx; margin-top: 8rpx; }
+.no-comment { text-align: center; color: #999; padding: 30rpx 0; }
 .footer {
   position: fixed;
   left: 0;

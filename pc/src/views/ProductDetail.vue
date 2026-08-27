@@ -15,6 +15,11 @@
           <s v-if="goods.marketPrice > selPrice" class="market">￥{{ fen2yuan(goods.marketPrice) }}</s>
           <span class="stock">库存 {{ selStock }} 件 · 已售 {{ goods.sales }}</span>
         </div>
+        <div class="collect">
+          <el-button :type="collected ? 'danger' : 'default'" size="small" round @click="onToggleCollect">
+            {{ collected ? '♥ 已收藏' : '♡ 收藏' }}
+          </el-button>
+        </div>
         <div class="spec-row" v-if="goods.items?.length">
           <span class="label">规格</span>
           <el-radio-group v-model="selItemId">
@@ -32,6 +37,15 @@
           <el-button type="danger" size="large" @click="buyNow">立即购买</el-button>
         </div>
         <div class="content"><div v-html="goods.content"></div></div>
+        <div class="comments">
+          <h3>用户评价（{{ commentTotal }}）</h3>
+          <div v-for="c in comments" :key="c.id" class="cm">
+            <div class="cm-head"><b>{{ c.nickname }}</b><span class="cm-score">★ {{ c.score }}.0</span></div>
+            <div class="cm-content">{{ c.content }}</div>
+            <div class="cm-reply" v-if="c.reply">商家回复：{{ c.reply }}</div>
+          </div>
+          <el-empty v-if="!comments.length" description="暂无评价" :image-size="60" />
+        </div>
       </el-col>
     </el-row>
   </div>
@@ -42,6 +56,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getGoodsDetail } from '@/api/goods'
 import { addCart } from '@/api/cart'
+import { collectStatus, toggleCollect, getComments } from '@/api/member'
 import { useUserStore } from '@/store/user'
 import { useCartStore } from '@/store/cart'
 import { ElMessage } from 'element-plus'
@@ -50,6 +65,9 @@ const route = useRoute()
 const router = useRouter()
 const user = useUserStore()
 const cart = useCartStore()
+const collected = ref(false)
+const comments = ref([])
+const commentTotal = ref(0)
 const goods = ref({})
 const images = ref([])
 const image = ref('')
@@ -75,6 +93,13 @@ function buyNow() {
   router.push({ path: '/checkout', query: { buyType: 'buyNow', goodsId: goods.value.id, goodsItemId: selItemId.value, num: num.value } })
 }
 
+async function onToggleCollect() {
+  if (!user.token) { ElMessage.warning('请先登录'); return router.push('/login') }
+  const res = await toggleCollect(goods.value.id)
+  collected.value = res.data
+  ElMessage.success(res.data ? '收藏成功' : '已取消收藏')
+}
+
 onMounted(async () => {
   const res = await getGoodsDetail(route.params.id)
   goods.value = res.data
@@ -83,6 +108,14 @@ onMounted(async () => {
   if (res.data.items?.length) {
     selItemId.value = res.data.items[0].id
     onSpec()
+  }
+  // 评价 + 收藏状态
+  const cm = await getComments(route.params.id)
+  comments.value = cm.data.records
+  commentTotal.value = cm.data.total
+  if (user.token) {
+    const s = await collectStatus(goods.value.id)
+    collected.value = s.data
   }
 })
 </script>
@@ -104,4 +137,11 @@ onMounted(async () => {
 .label { width: 60px; color: #999; }
 .actions { margin-top: 24px; display: flex; gap: 12px; }
 .content { margin-top: 20px; color: #666; line-height: 1.8; }
+.comments { margin-top: 20px; border-top: 1px solid #f0f0f0; padding-top: 16px; }
+.cm { border-bottom: 1px solid #f5f5f5; padding: 12px 0; }
+.cm-head { display: flex; justify-content: space-between; }
+.cm-score { color: #ffb400; }
+.cm-content { color: #666; margin-top: 6px; }
+.cm-reply { color: #999; font-size: 13px; margin-top: 6px; }
+.collect { margin-top: 14px; }
 </style>
