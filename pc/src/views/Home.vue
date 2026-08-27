@@ -38,8 +38,8 @@ const fen2yuan = (f) => (f / 100).toFixed(2)
 onMounted(async () => {
   const [d, c, g] = await Promise.all([getHomeDecorate(), getCategoryTree(), getGoodsList({ page: 1, size: 12 })])
   try { Object.assign(decorate, JSON.parse(d.data)) } catch (e) { Object.assign(decorate, d.data) }
-  cats.push(...c.data)
-  goods.push(...g.data.records)
+  cats.value.push(...c.data)
+  goods.value.push(...g.data.records)
 })
 </script>
 
