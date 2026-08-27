@@ -10,7 +10,7 @@
         <nav class="nav">
           <router-link to="/">首页</router-link>
           <router-link to="/products">全部商品</router-link>
-          <router-link to="/cart"><el-badge :value="0" hide>购物车</el-badge></router-link>
+          <router-link to="/cart"><el-badge :value="cart.count" :hidden="!user.token || !cart.count">购物车</el-badge></router-link>
           <router-link to="/orders">我的订单</router-link>
           <template v-if="user.token">
             <span class="uname">{{ user.userInfo?.nickname }}</span>
@@ -31,17 +31,28 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
+import { useCartStore } from '@/store/cart'
+import { onMounted } from 'vue'
 
 const router = useRouter()
 const user = useUserStore()
+const cart = useCartStore()
 const kw = ref('')
 function search() {
   router.push({ path: '/products', query: { keyword: kw.value } })
 }
 function logout() {
   user.logout()
+  cart.count = 0
   router.push('/')
 }
+
+onMounted(() => {
+  // 路由变化后刷新购物车角标（登录状态可能变化）
+  router.afterEach(() => {
+    if (useUserStore().token) cart.fetchCount()
+  })
+})
 </script>
 
 <style scoped>

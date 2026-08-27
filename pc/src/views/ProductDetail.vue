@@ -43,10 +43,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { getGoodsDetail } from '@/api/goods'
 import { addCart } from '@/api/cart'
 import { useUserStore } from '@/store/user'
+import { useCartStore } from '@/store/cart'
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
 const user = useUserStore()
+const cart = useCartStore()
 const goods = ref({})
 const images = ref([])
 const image = ref('')
@@ -62,11 +65,13 @@ function onSpec() {
 }
 
 async function addToCart() {
-  if (!user.token) return router.push('/login')
+  if (!user.token) { ElMessage.warning('请先登录'); return router.push('/login') }
   await addCart({ goodsId: goods.value.id, goodsItemId: selItemId.value, num: num.value })
+  cart.fetchCount()
+  ElMessage.success('已加入购物车')
 }
 function buyNow() {
-  if (!user.token) return router.push('/login')
+  if (!user.token) { ElMessage.warning('请先登录'); return router.push('/login') }
   router.push({ path: '/checkout', query: { buyType: 'buyNow', goodsId: goods.value.id, goodsItemId: selItemId.value, num: num.value } })
 }
 
