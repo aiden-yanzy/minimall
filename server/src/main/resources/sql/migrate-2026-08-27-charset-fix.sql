@@ -1,0 +1,18 @@
+UPDATE `coupon` SET name='新人无门槛5元券', description='新用户专享，无门槛立减5元' WHERE id=1;
+UPDATE `coupon` SET name='满300减50', description='全场满300减50' WHERE id=2;
+UPDATE `full_reduction` SET name='全场满200减20' WHERE id=1;
+UPDATE `integral_goods` SET name='限定帆布袋', description='环保材质 限量兑换' WHERE id=1;
+UPDATE `integral_goods` SET name='品牌雨伞', description='晴雨两用' WHERE id=2;
+UPDATE `seckill_activity` SET name='今日秒杀' WHERE id=1;
+UPDATE `team_activity` SET name='双人拼团耳机' WHERE id=1;
+UPDATE `bargain_activity` SET name='砍价到199' WHERE id=1;
+UPDATE `presell_activity` SET name='新品预售' WHERE id=1;
+UPDATE `recharge_template` SET name='充50送5' WHERE id=1;
+UPDATE `recharge_template` SET name='充100送15' WHERE id=2;
+UPDATE `recharge_template` SET name='充200送40' WHERE id=3;
+UPDATE `distribution_level` SET name='普通分销员', upgrade_condition='注册即享' WHERE id=1;
+UPDATE `distribution_level` SET name='高级分销员', upgrade_condition='累计佣金达标' WHERE id=2;
+UPDATE `article_category` SET name='商城公告' WHERE id=1;
+UPDATE `article_category` SET name='帮助中心' WHERE id=2;
+UPDATE `article` SET title='欢迎来到 Minimall 商城', content='<h3>欢迎光临</h3><p>全新商城上线，秒杀、拼团、砍价、积分好礼等你来！</p>' WHERE id=1;
+UPDATE `article` SET title='购物指南', content='<h3>购物流程</h3><p>选好商品 → 加入购物车 → 提交订单 → 支付 → 等待收货。</p>' WHERE id=2;
