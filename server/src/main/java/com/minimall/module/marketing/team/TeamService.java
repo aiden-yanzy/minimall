@@ -12,6 +12,8 @@ import com.minimall.module.order.mapper.OrderGoodsMapper;
 import com.minimall.module.order.mapper.OrderMapper;
 import com.minimall.module.order.model.entity.Order;
 import com.minimall.module.order.model.entity.OrderGoods;
+import com.minimall.module.user.service.UserService;
+import com.minimall.module.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +34,11 @@ public class TeamService {
     private final GoodsService goodsService;
     private final OrderMapper orderMapper;
     private final OrderGoodsMapper orderGoodsMapper;
+    private final UserService userService;
+    private final WalletService walletService;
+
+    /** 拼团超时时间：开团后 24 小时未成团则失败退款 */
+    public static final java.time.Duration EXPIRE_AFTER = java.time.Duration.ofHours(24);
 
     /** 拼团活动列表（含商品信息） */
     public List<TeamActivityVO> list() {
@@ -175,6 +182,55 @@ public class TeamService {
 
     private Long activityOf(Order order) {
         return activityIdOf(order);
+    }
+
+    /**
+     * 扫描超时未成团的团：标记失败（status=2），团内已支付订单自动退款、恢复库存。
+     * 条件：开团超过 24 小时仍为拼团中。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public int scanExpired() {
+        LocalDateTime deadline = LocalDateTime.now().minus(EXPIRE_AFTER);
+        List<TeamFound> founds = foundMapper.selectList(Wrappers.<TeamFound>lambdaQuery()
+                .eq(TeamFound::getStatus, 0)
+                .lt(TeamFound::getCreateTime, deadline));
+        int expired = 0;
+        for (TeamFound found : founds) {
+            foundMapper.update(null, Wrappers.<TeamFound>lambdaUpdate()
+                    .eq(TeamFound::getId, found.getId())
+                    .set(TeamFound::getStatus, 2));
+            for (TeamJoin join : joinMapper.selectList(Wrappers.<TeamJoin>lambdaQuery()
+                    .eq(TeamJoin::getFoundId, found.getId()))) {
+                refundOrder(join.getOrderId(), join.getUserId());
+            }
+            expired++;
+        }
+        return expired;
+    }
+
+    /** 拼团失败退款：恢复库存 + 订单取消 + 余额退回/流水记录 */
+    @Transactional(rollbackFor = Exception.class)
+    private void refundOrder(Long orderId, Long userId) {
+        Order order = orderMapper.selectById(orderId);
+        if (order == null || order.getOrderStatus() != 1) return; // 仅待发货(已支付未发货)退款
+        // 恢复库存
+        for (OrderGoods og : orderGoodsMapper.selectList(Wrappers.<OrderGoods>lambdaQuery()
+                .eq(OrderGoods::getOrderId, orderId))) {
+            goodsService.restoreStock(og.getGoodsItemId(), og.getNum());
+            goodsService.minusSales(og.getGoodsId(), og.getNum());
+        }
+        // 余额支付则真实退款，否则模拟退款（记录流水）
+        if (order.getPayType() != null && order.getPayType() == 3
+                && order.getPayAmount() != null && order.getPayAmount() > 0) {
+            walletService.changeBalance(userId, order.getPayAmount(), 3, "拼团失败自动退款:" + order.getOrderSn());
+        } else if (order.getPayAmount() != null && order.getPayAmount() > 0) {
+            walletService.logOnly(userId, 3, order.getPayAmount(), "拼团失败自动退款(模拟):" + order.getOrderSn());
+        }
+        orderMapper.update(null, Wrappers.<Order>lambdaUpdate()
+                .eq(Order::getId, orderId)
+                .set(Order::getOrderStatus, 4)
+                .set(Order::getCancelTime, LocalDateTime.now())
+                .set(Order::getCancelReason, "拼团超时未成团，已自动退款"));
     }
 
     /** 我发起的/参与的团 */

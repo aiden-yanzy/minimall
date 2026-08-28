@@ -93,6 +93,13 @@ public class AdminP5Controller {
         return R.ok("发货成功", null);
     }
 
+    @Operation(summary = "手动扫描超时团并退款")
+    @PostMapping("/team/scan")
+    public R<Integer> scanTimeout() {
+        int n = teamService.scanExpired();
+        return R.ok("处理 " + n + " 个超时团", n);
+    }
+
     @Operation(summary = "拼团列表")
     @GetMapping("/team/founds")
     public R<List<TeamService.TeamFoundVO>> founds() {

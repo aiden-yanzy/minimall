@@ -51,6 +51,18 @@ public class WalletService {
         return newBalance;
     }
 
+    /** 只写流水（模拟退款：不实际动账） */
+    public void logOnly(Long userId, int type, long amount, String remark) {
+        User user = userService.getById(userId);
+        AccountLog log = new AccountLog();
+        log.setUserId(userId);
+        log.setType(type);
+        log.setChangeAmount(amount);
+        log.setBalanceAfter(user == null ? 0 : (user.getBalance() == null ? 0 : user.getBalance()));
+        log.setRemark(remark);
+        accountLogMapper.insert(log);
+    }
+
     /** 账户流水 */
     public List<AccountLog> logs(Long userId, Integer type) {
         return accountLogMapper.selectList(Wrappers.<AccountLog>lambdaQuery()
