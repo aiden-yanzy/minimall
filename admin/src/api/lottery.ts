@@ -1,0 +1,10 @@
+import http from './http'
+export const luckyDrawsApi = () => http.get('/admin/lottery/draws')
+export const luckyDrawSaveApi = (data: any) => http.post('/admin/lottery/draws', data)
+export const luckyPrizesApi = (drawId?: number) => http.get('/admin/lottery/prizes', { params: { drawId } })
+export const luckyPrizeSaveApi = (data: any) => http.post('/admin/lottery/prizes', data)
+export const luckyRecordsApi = () => http.get('/admin/lottery/records')
+export const registerAwardApi = () => http.get('/admin/lottery/register-award')
+export const registerAwardSaveApi = (data: any) => http.post('/admin/lottery/register-award', data)
+export const freeShippingApi = () => http.get('/admin/free-shipping')
+export const freeShippingSaveApi = (data: any) => http.post('/admin/free-shipping', data)

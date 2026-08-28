@@ -40,6 +40,7 @@
       <view class="menu-item" @click="go('/pages/bargain/list')">我的砍价</view>
       <view class="menu-item" @click="go('/pages/presell/list')">预售专区</view>
       <view class="menu-item" @click="go('/pages/sign/sign')">每日签到</view>
+      <view class="menu-item" @click="go('/pages/lucky/draw')">幸运抽奖</view>
     </view>
 
     <button v-if="userInfo" class="logout" @click="logout">退出登录</button>

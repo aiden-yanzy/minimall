@@ -52,6 +52,12 @@ const router = createRouter({
           meta: { title: '财务明细' }
         },
         {
+          path: 'extras',
+          name: 'extras',
+          component: () => import('@/views/marketing/extras.vue'),
+          meta: { title: '抽奖/注册送/免邮' }
+        },
+        {
           path: 'freight',
           name: 'freight',
           component: () => import('@/views/setting/freight.vue'),

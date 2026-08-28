@@ -1,1 +1,0 @@
-import{p as r,g as o}from"./_plugin-vue_export-helper.BpqN6RA_.js";const s=o=>r("/shop/order/create",o),e=o=>r("/shop/order/preview",o),p=r=>o("/shop/order",{status:r}),a=r=>o("/shop/order/"+r),h=(o,s)=>r("/shop/order/"+o+"/cancel?reason="+(s||"")),t=(o,s)=>r("/shop/pay/mock",{orderSn:o,payType:s||1});export{a,h as b,s as c,p as g,t as m,e as p};

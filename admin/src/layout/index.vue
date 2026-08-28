@@ -27,6 +27,10 @@
           <el-icon><Present /></el-icon>
           <span>财务明细</span>
         </el-menu-item>
+        <el-menu-item index="/extras">
+          <el-icon><Present /></el-icon>
+          <span>抽奖/注册送/免邮</span>
+        </el-menu-item>
         <el-menu-item index="/freight">
           <el-icon><Goods /></el-icon>
           <span>运费模板</span>

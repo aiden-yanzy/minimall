@@ -155,6 +155,12 @@
       "style": {
         "navigationBarTitleText": "浏览足迹"
       }
+    },
+    {
+      "path": "pages/lucky/draw",
+      "style": {
+        "navigationBarTitleText": "幸运抽奖"
+      }
     }
   ],
   "globalStyle": {
