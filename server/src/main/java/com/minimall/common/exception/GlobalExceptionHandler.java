@@ -39,7 +39,7 @@ public class GlobalExceptionHandler {
 
     /** 无角色/无权限 */
     @ExceptionHandler({NotRoleException.class, NotPermissionException.class})
-    public R<Void> handleNotRole(NotRoleException e) {
+    public R<Void> handleNotAuth(Exception e) {
         return R.fail(ResultCode.FORBIDDEN);
     }
 

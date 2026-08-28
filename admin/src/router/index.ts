@@ -52,6 +52,18 @@ const router = createRouter({
           meta: { title: '财务明细' }
         },
         {
+          path: 'roles',
+          name: 'roles',
+          component: () => import('@/views/system/roles.vue'),
+          meta: { title: '角色权限' }
+        },
+        {
+          path: 'settings',
+          name: 'settings',
+          component: () => import('@/views/system/settings.vue'),
+          meta: { title: '设置中心' }
+        },
+        {
           path: 'extras',
           name: 'extras',
           component: () => import('@/views/marketing/extras.vue'),

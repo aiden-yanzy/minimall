@@ -1,6 +1,7 @@
 package com.minimall.module.aftersale.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.minimall.common.result.R;
 import com.minimall.module.aftersale.model.entity.AfterSale;
 import com.minimall.module.aftersale.service.AfterSaleService;
@@ -35,6 +36,7 @@ public class AdminAfterSaleController {
     }
 
     @Operation(summary = "同意退款")
+    @SaCheckPermission(value = "after:manage", type = "admin")
     @PostMapping("/{id}/approve")
     public R<Void> approve(@PathVariable Long id) {
         afterSaleService.approve(id);
@@ -42,6 +44,7 @@ public class AdminAfterSaleController {
     }
 
     @Operation(summary = "拒绝售后")
+    @SaCheckPermission(value = "after:manage", type = "admin")
     @PostMapping("/{id}/reject")
     public R<Void> reject(@PathVariable Long id, @RequestParam(required = false) String reason) {
         afterSaleService.reject(id, reason);

@@ -1,6 +1,7 @@
 package com.minimall.module.order.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.minimall.common.result.R;
 import com.minimall.module.order.model.dto.BatchDeliverDTO;
 import com.minimall.module.order.model.dto.DeliverDTO;
@@ -40,6 +41,7 @@ public class AdminOrderController {
     }
 
     @Operation(summary = "发货")
+    @SaCheckPermission(value = "order:deliver", type = "admin")
     @PostMapping("/{id}/deliver")
     public R<Void> deliver(@PathVariable Long id, @Valid @RequestBody DeliverDTO dto) {
         orderService.deliver(id, dto.getExpressId(), dto.getExpressName(), dto.getExpressNo());
@@ -47,6 +49,7 @@ public class AdminOrderController {
     }
 
     @Operation(summary = "批量发货")
+    @SaCheckPermission(value = "order:deliver", type = "admin")
     @PostMapping("/deliver-batch")
     public R<Integer> deliverBatch(@RequestBody BatchDeliverDTO dto) {
         int n = orderService.batchDeliver(dto.getOrderIds(), dto.getExpressId(), dto.getExpressName(), dto.getExpressNo());

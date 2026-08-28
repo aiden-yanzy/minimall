@@ -27,6 +27,9 @@ public class Admin extends BaseEntity {
     /** 角色名称（P0 先用字符串，后续换 role 表） */
     private String roleName;
 
+    /** 角色 id（RBAC） */
+    private Long roleId;
+
     /** 头像 */
     private String avatar;
 

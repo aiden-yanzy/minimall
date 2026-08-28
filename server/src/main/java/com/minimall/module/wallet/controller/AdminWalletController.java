@@ -1,6 +1,7 @@
 package com.minimall.module.wallet.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.minimall.common.result.R;
 import com.minimall.module.wallet.model.entity.WithdrawApply;
 import com.minimall.module.wallet.service.WalletService;
@@ -35,6 +36,7 @@ public class AdminWalletController {
     }
 
     @Operation(summary = "同意提现(模拟打款)")
+    @SaCheckPermission(value = "finance:withdraw", type = "admin")
     @PostMapping("/withdraws/{id}/approve")
     public R<Void> approve(@PathVariable Long id) {
         walletService.auditWithdraw(id, true, "审核通过");
@@ -42,6 +44,7 @@ public class AdminWalletController {
     }
 
     @Operation(summary = "拒绝提现(退回余额)")
+    @SaCheckPermission(value = "finance:withdraw", type = "admin")
     @PostMapping("/withdraws/{id}/reject")
     public R<Void> reject(@PathVariable Long id, @RequestParam(required = false) String reason) {
         walletService.auditWithdraw(id, false, reason);

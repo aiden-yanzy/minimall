@@ -27,6 +27,14 @@
           <el-icon><Present /></el-icon>
           <span>财务明细</span>
         </el-menu-item>
+        <el-menu-item index="/roles">
+          <el-icon><Goods /></el-icon>
+          <span>角色权限</span>
+        </el-menu-item>
+        <el-menu-item index="/settings">
+          <el-icon><Goods /></el-icon>
+          <span>设置中心</span>
+        </el-menu-item>
         <el-menu-item index="/extras">
           <el-icon><Present /></el-icon>
           <span>抽奖/注册送/免邮</span>
