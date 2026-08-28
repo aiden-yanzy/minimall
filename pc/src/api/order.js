@@ -7,3 +7,4 @@ export const cancelOrder = (id, reason) => http.post(`/shop/order/${id}/cancel?r
 export const mockPay = (orderSn, payType) => http.post('/shop/pay/mock', { orderSn, payType })
 export const receive = (id) => http.post(`/shop/order/${id}/receive`)
 export const getCoupons = () => http.get('/shop/coupon/mine', { params: { status: 0 } })
+export const getOrderTraces = (id) => http.post(`/shop/order/${id}/traces`)

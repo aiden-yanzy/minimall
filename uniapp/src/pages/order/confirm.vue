@@ -52,6 +52,7 @@
       <view class="amount-row" v-if="preview?.couponAmount">
         <text>优惠券</text><text class="red">-￥{{ fen2yuan(preview.couponAmount) }}</text>
       </view>
+      <view class="amount-row" v-if="preview?.freightAmount"><text>运费</text><text>￥{{ fen2yuan(preview.freightAmount) }}</text></view>
       <view class="total-row">
         <text>应付</text>
         <text class="total">￥{{ fen2yuan(preview?.payAmount ?? totalPrice) }}</text>

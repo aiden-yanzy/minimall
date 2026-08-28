@@ -74,6 +74,11 @@
           <el-input v-model="form.content" type="textarea" :rows="3" />
         </el-form-item>
 
+                <el-form-item label="运费模板">
+          <el-select v-model="form.deliveryTemplateId" placeholder="选择模板" clearable style="width: 100%">
+            <el-option v-for="t in freightTpls" :key="t.id" :label="t.name" :value="t.id" />
+          </el-select>
+        </el-form-item>
         <el-divider>SKU</el-divider>
         <div v-for="(item, idx) in form.items" :key="idx" class="sku-row">
           <el-input v-model="item.specValueStr" placeholder="规格(如:黑色)" style="width: 110px" />
@@ -102,6 +107,7 @@ const list = ref<any[]>([])
 const total = ref(0)
 const loading = ref(false)
 const cats = ref<any[]>([])
+const freightTpls = ref<any[]>([])
 const query = reactive({ page: 1, size: 10, keyword: '' })
 
 const dialogVisible = ref(false)
@@ -123,9 +129,13 @@ async function loadCats() {
   const res: any = await categoryTreeApi()
   cats.value = res.data
 }
+async function loadFreight() {
+  const res: any = await freightTemplatesApi()
+  freightTpls.value = res.data
+}
 
 function openCreate() {
-  Object.assign(form, { name: '', subtitle: '', categoryId: null, image: '', content: '', items: [{ specValueStr: '', price: 0, stock: 0 }] })
+  Object.assign(form, { name: '', subtitle: '', categoryId: null, deliveryTemplateId: null, image: '', content: '', items: [{ specValueStr: '', price: 0, stock: 0 }] })
   dialogVisible.value = true
 }
 
@@ -173,6 +183,7 @@ async function remove(row: any) {
 onMounted(() => {
   load()
   loadCats()
+  loadFreight()
 })
 </script>
 

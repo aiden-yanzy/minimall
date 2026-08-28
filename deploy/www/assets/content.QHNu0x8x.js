@@ -1,1 +1,0 @@
-import{g as s,p as e}from"./_plugin-vue_export-helper.DR39bYth.js";const o=()=>s("/shop/decorate/home"),a=e=>s("/shop/article/list",{categoryId:e}),p=e=>s("/shop/article/"+e),t=s=>e("/shop/kefu/send",{content:s}),r=()=>s("/shop/kefu/messages");export{t as a,a as b,p as c,o as g,r as k};

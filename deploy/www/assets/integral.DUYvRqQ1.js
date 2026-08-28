@@ -1,1 +1,0 @@
-import{g as e,p as s}from"./_plugin-vue_export-helper.DR39bYth.js";const o=()=>e("/shop/integral/goods"),a=e=>s("/shop/integral/exchange",e),r=()=>e("/shop/integral/orders");export{r as a,a as e,o as g};

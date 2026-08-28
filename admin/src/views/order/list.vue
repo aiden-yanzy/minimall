@@ -65,13 +65,34 @@
         <el-button type="primary" @click="deliver">确认发货</el-button>
       </template>
     </el-dialog>
+
+    <!-- 批量发货弹窗 -->
+    <el-dialog v-model="batchDialog" title="批量发货" width="420px">
+      <el-form label-width="80px">
+        <el-form-item label="快递公司">
+          <el-select v-model="batch.expressId" style="width:100%">
+            <el-option label="顺丰速运" :value="1" />
+            <el-option label="圆通速递" :value="2" />
+            <el-option label="中通快递" :value="3" />
+            <el-option label="韵达快递" :value="4" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="单号">
+          <el-input v-model="batch.expressNo" placeholder="留空则自动生成" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="batchDialog = false">取消</el-button>
+        <el-button type="primary" @click="batchSubmit">确认发货 {{ selectedIds.length }} 单</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { orderPageApi, orderDeliverApi } from '@/api/order'
+import { orderPageApi, orderDeliverApi, orderBatchDeliverApi } from '@/api/order'
 
 const list = ref<any[]>([])
 const loading = ref(false)

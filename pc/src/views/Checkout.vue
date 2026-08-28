@@ -41,6 +41,7 @@
       <div class="row" v-if="preview?.memberDiscount"><span>会员优惠</span><span class="red">-￥{{ fen2yuan(preview.memberDiscount) }}</span></div>
       <div class="row" v-if="preview?.fullReduction"><span>满减</span><span class="red">-￥{{ fen2yuan(preview.fullReduction) }}</span></div>
       <div class="row" v-if="preview?.couponAmount"><span>优惠券</span><span class="red">-￥{{ fen2yuan(preview.couponAmount) }}</span></div>
+      <div class="row" v-if="preview?.freightAmount"><span>运费</span><span>￥{{ fen2yuan(preview.freightAmount) }}</span></div>
       <div class="row">
         <span>优惠券</span>
         <el-select v-model="couponListId" placeholder="不使用" clearable size="small" style="width:220px" @change="fetchPreview">

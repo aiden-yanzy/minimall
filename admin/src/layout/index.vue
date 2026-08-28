@@ -11,6 +11,10 @@
           <el-icon><Goods /></el-icon>
           <span>商品管理</span>
         </el-menu-item>
+        <el-menu-item index="/freight">
+          <el-icon><Goods /></el-icon>
+          <span>运费模板</span>
+        </el-menu-item>
         <el-menu-item index="/comments">
           <el-icon><Goods /></el-icon>
           <span>评价管理</span>

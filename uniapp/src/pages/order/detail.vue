@@ -29,7 +29,7 @@
       <view class="amount-row"><text>运费</text><text>￥{{ fen2yuan(order.freightAmount) }}</text></view>
       <view class="amount-row"><text>优惠</text><text>-￥{{ fen2yuan(order.discountAmount) }}</text></view>
       <view class="amount-row total"><text>实付金额</text><text class="red">￥{{ fen2yuan(order.payAmount) }}</text></view>
-      <view class="amount-row" v-if="order.expressNo"><text>物流单号</text><text>{{ order.expressName || '' }} {{ order.expressNo }}</text></view>
+      <view class="amount-row" v-if="order.expressNo"><text>物流</text><text class="copy" @click="openTraces">{{ order.expressName || '' }} {{ order.expressNo }}（轨迹）</text></view>
       <view class="amount-row"><text>订单编号</text><text class="copy" @click="copy(order.orderSn)">{{ order.orderSn }}</text></view>
     </view>
 
@@ -52,6 +52,19 @@
       <button class="ok" @click="submitComment">提交评价</button>
     </view>
   </view>
+
+    <!-- 物流轨迹弹层 -->
+    <view v-if="showTraces" class="mask"></view>
+    <view v-if="showTraces" class="traces-sheet">
+      <view class="sheet-title">物流轨迹</view>
+      <view v-for="(t, i) in traces" :key="i" class="trace">
+        <view class="trace-dot"></view>
+        <view class="trace-body">
+          <view class="desc">{{ t.desc }}</view>
+          <view class="time">{{ (t.time || '').slice(0, 16) }}</view>
+        </view>
+      </view>
+    </view>
 </template>
 
 <script setup>
@@ -68,6 +81,8 @@ const showComment = ref(false)
 const score = ref(5)
 const content = ref('')
 const currentGoods = ref(null)
+const showTraces = ref(false)
+const traces = ref([])
 
 const statusMap = {
   0: '待支付', 1: '待发货', 2: '待收货', 3: '已完成', 4: '已取消'
@@ -104,6 +119,13 @@ function copy(text) {
 }
 function confirmModal(title, fn) {
   uni.showModal({ title: '提示', content: title, success: (r) => r.confirm && fn() })
+}
+
+function openTraces() {
+  post('/shop/order/' + order.value.id + '/traces').then((res) => {
+    traces.value = res.data
+    showTraces.value = true
+  })
 }
 
 function openComment(g) {
@@ -233,6 +255,12 @@ onLoad((o) => {
   color: #fff;
 }
 .comment-btn { color: #3370ff; font-size: 22rpx; margin-top: 10rpx; }
+.traces-sheet { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; z-index: 11; padding: 30rpx; max-height: 70vh; overflow-y: auto; }
+.trace { display: flex; gap: 16rpx; padding: 14rpx 0; }
+.trace-dot { width: 16rpx; height: 16rpx; border-radius: 50%; background: #07c160; margin-top: 8rpx; flex-shrink: 0; }
+.trace-body { flex: 1; }
+.desc { font-size: 26rpx; color: #333; }
+.time { color: #999; font-size: 22rpx; margin-top: 4rpx; }
 .mask { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 10; }
 .sheet { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; z-index: 11; padding: 30rpx; }
 .sheet-title { font-weight: bold; margin-bottom: 16rpx; }

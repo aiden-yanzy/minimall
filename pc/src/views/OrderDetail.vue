@@ -10,7 +10,10 @@
         <el-descriptions-item label="下单时间">{{ order.createTime }}</el-descriptions-item>
         <el-descriptions-item label="收货人">{{ order.contact }} {{ order.mobile }}</el-descriptions-item>
         <el-descriptions-item label="地址" :span="2">{{ order.address }}</el-descriptions-item>
-        <el-descriptions-item label="物流">{{ order.expressName }} {{ order.expressNo || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="物流">
+          {{ order.expressName }} {{ order.expressNo || '-' }}
+          <el-button v-if="order.expressNo" link type="primary" @click="openTraces">查看轨迹</el-button>
+        </el-descriptions-item>
         <el-descriptions-item label="商品金额">￥{{ fen2yuan(order.totalAmount) }}</el-descriptions-item>
         <el-descriptions-item label="优惠">-￥{{ fen2yuan((order.memberDiscount || 0) + (order.couponAmount || 0)) }}</el-descriptions-item>
         <el-descriptions-item label="实付"><b class="red">￥{{ fen2yuan(order.payAmount) }}</b></el-descriptions-item>
@@ -21,6 +24,14 @@
         <div>{{ g.goodsName }} <span class="spec">{{ g.specValueStr }}</span></div>
         <div class="r">￥{{ fen2yuan(g.price) }} × {{ g.num }} = ￥{{ fen2yuan(g.totalPrice) }}</div>
       </div>
+
+      <el-dialog v-model="showTraces" title="物流轨迹" width="480px">
+        <el-timeline style="max-height:60vh; overflow:auto">
+          <el-timeline-item v-for="t in traces" :key="t.time" :timestamp="(t.time || '').slice(0,16)" placement="top">
+            {{ t.desc }}
+          </el-timeline-item>
+        </el-timeline>
+      </el-dialog>
 
       <div class="actions">
         <el-button v-if="order.orderStatus === 0" @click="cancel">取消订单</el-button>
@@ -35,13 +46,21 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { getOrderDetail, mockPay, cancelOrder, receive } from '@/api/order'
+import { getOrderDetail, getOrderTraces, mockPay, cancelOrder, receive } from '@/api/order'
 
 const route = useRoute()
 const order = ref({})
 const statusMap = { 0: '待支付', 1: '待发货', 2: '待收货', 3: '已完成', 4: '已取消' }
 const tagType = (s) => ({ 0: 'warning', 1: 'primary', 2: 'success', 3: 'success', 4: 'info' }[s])
 const fen2yuan = (f) => (f / 100).toFixed(2)
+const showTraces = ref(false)
+const traces = ref([])
+
+async function openTraces() {
+  const res = await getOrderTraces(route.params.id)
+  traces.value = res.data
+  showTraces.value = true
+}
 
 async function load() {
   const res = await getOrderDetail(route.params.id)
