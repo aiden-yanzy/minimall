@@ -16,6 +16,7 @@ public class OrderPreviewVO {
     private Long fullReduction;
     private Long couponAmount;
     private Long discountAmount;
+    private Long freightAmount;
     private Long payAmount;
 
     /** 会员等级名（无则普通） */

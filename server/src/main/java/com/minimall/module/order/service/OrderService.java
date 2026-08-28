@@ -52,6 +52,7 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
     private final SeckillService seckillService;
     private final DistributionService distributionService;
     private final com.minimall.module.user.mapper.UserAddressMapper userAddressMapper;
+    private final com.minimall.module.freight.service.FreightService freightService;
 
     /** 内部结算行 */
     private static class Line {
@@ -105,6 +106,8 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         // 2. 计算金额（商品总额 + 会员价 + 满减 + 优惠券）
         long total = lines.stream().mapToLong(l -> l.price * l.num).sum();
         PromoResult promo = computePromo(userId, total, dto.getCouponListId());
+        // 运费
+        long freight = calcFreight(lines);
 
         // 3. 创建订单
         Order order = new Order();
@@ -117,10 +120,10 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         order.setTotalAmount(total);
         order.setMemberDiscount(promo.memberDiscount);
         order.setDiscountAmount(promo.discountAmount());
-        order.setFreightAmount(0L);
+        order.setFreightAmount(freight);
         order.setCouponId(promo.coupon != null ? promo.coupon.getCouponId() : null);
         order.setCouponAmount(promo.couponAmount);
-        order.setPayAmount(promo.payAmount);
+        order.setPayAmount(promo.payAmount + freight);
         order.setRemark(dto.getRemark());
         order.setContact(contact);
         order.setMobile(mobile);
@@ -175,6 +178,7 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         List<Line> lines = assembleLines(userId, dto);
         long total = lines.stream().mapToLong(l -> l.price * l.num).sum();
         PromoResult promo = computePromo(userId, total, dto.getCouponListId());
+        long freight = calcFreight(lines);
 
         OrderPreviewVO vo = new OrderPreviewVO();
         vo.setTotalAmount(total);
@@ -182,7 +186,8 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         vo.setFullReduction(promo.fullReduction);
         vo.setCouponAmount(promo.couponAmount);
         vo.setDiscountAmount(promo.discountAmount());
-        vo.setPayAmount(promo.payAmount);
+        vo.setFreightAmount(freight);
+        vo.setPayAmount(promo.payAmount + freight);
         vo.setAvailableCoupons(couponService.usable(userId, total - promo.memberDiscount - promo.fullReduction));
         // 会员等级名
         User user = userService.getById(userId);
@@ -191,6 +196,16 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
             vo.setMemberName(level != null ? level.getName() : null);
         }
         return vo;
+    }
+
+    /** 计算运费（订单所有结算行按模板计费累加） */
+    private long calcFreight(List<Line> lines) {
+        long freight = 0;
+        for (Line l : lines) {
+            java.math.BigDecimal weight = l.item.getWeight() == null ? java.math.BigDecimal.ZERO : l.item.getWeight();
+            freight += freightService.calculate(l.goods, l.num, weight.multiply(java.math.BigDecimal.valueOf(l.num)));
+        }
+        return freight;
     }
 
     /** 促销计算结果 */
@@ -387,13 +402,11 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         distributionService.settle(orderId);
     }
 
-    /** 后台发货 */
+    /** 后台分单发货 */
     public void deliver(Long orderId, Long expressId, String expressName, String expressNo) {
         Order order = this.getById(orderId);
         if (order == null) throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
-        if (order.getOrderStatus() != 1) {
-            throw new BusinessException(ResultCode.ORDER_STATUS_ERROR);
-        }
+        if (order.getOrderStatus() != 1) throw new BusinessException("订单 " + order.getOrderSn() + " 非待发货状态");
         this.lambdaUpdate().eq(Order::getId, orderId)
                 .set(Order::getOrderStatus, 2)
                 .set(Order::getExpressId, expressId)
@@ -401,6 +414,44 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
                 .set(Order::getExpressNo, expressNo)
                 .set(Order::getDeliveryTime, LocalDateTime.now())
                 .update();
+    }
+
+    /** 批量发货（指定快递，单号缺失则自动生成 前缀+序号） */
+    @Transactional(rollbackFor = Exception.class)
+    public int batchDeliver(List<Long> orderIds, Long expressId, String expressName, String expressNo) {
+        int done = 0;
+        int i = 1;
+        for (Long id : orderIds) {
+            Order order = this.getById(id);
+            if (order == null || order.getOrderStatus() != 1) continue;
+            String no = (expressNo == null || expressNo.isBlank())
+                    ? "BATCH" + System.currentTimeMillis() + String.format("%03d", i)
+                    : expressNo;
+            deliver(id, expressId, expressName, no);
+            done++;
+            i++;
+        }
+        return done;
+    }
+
+    /** 物流轨迹（模拟，按订单状态生成） */
+    public List<Map<String, Object>> expressTraces(Long userId, Long orderId) {
+        Order order = this.getById(orderId);
+        if (order == null || !order.getUserId().equals(userId)) throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
+        List<Map<String, Object>> traces = new ArrayList<>();
+        traces.add(Map.of("time", order.getCreateTime(), "desc", "买家已下单"));
+        if (order.getPayTime() != null) traces.add(Map.of("time", order.getPayTime(), "desc", "订单支付成功"));
+        if (order.getDeliveryTime() != null) {
+            traces.add(Map.of("time", order.getDeliveryTime(), "desc", "商家已发货（" + order.getExpressName() + " " + order.getExpressNo() + "）"));
+            traces.add(Map.of("time", order.getDeliveryTime().plusHours(6), "desc", "包裹已到达转运中心"));
+            traces.add(Map.of("time", order.getDeliveryTime().plusHours(30), "desc", "运输中，预计1-3天送达"));
+        }
+        if (order.getReceiveTime() != null) {
+            traces.add(Map.of("time", order.getReceiveTime(), "desc", "已签收，感谢您的惠顾"));
+        } else if (order.getOrderStatus() == 2) {
+            traces.add(Map.of("time", LocalDateTime.now(), "desc", "派送中，请保持电话畅通"));
+        }
+        return traces;
     }
 
     /** 订单商品行（供售后使用） */

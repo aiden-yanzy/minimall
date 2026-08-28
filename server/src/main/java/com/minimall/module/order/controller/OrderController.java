@@ -71,4 +71,10 @@ public class OrderController {
         orderService.confirmReceive(userService.getCurrentUserId(), id);
         return R.ok("确认收货成功", null);
     }
+
+    @Operation(summary = "物流轨迹")
+    @PostMapping("/{id}/traces")
+    public R<java.util.List<java.util.Map<String, Object>>> traces(@PathVariable Long id) {
+        return R.ok(orderService.expressTraces(userService.getCurrentUserId(), id));
+    }
 }

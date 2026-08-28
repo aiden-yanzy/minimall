@@ -2,6 +2,7 @@ package com.minimall.module.order.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.minimall.common.result.R;
+import com.minimall.module.order.model.dto.BatchDeliverDTO;
 import com.minimall.module.order.model.dto.DeliverDTO;
 import com.minimall.module.order.model.vo.OrderVO;
 import com.minimall.module.order.service.OrderService;
@@ -43,5 +44,12 @@ public class AdminOrderController {
     public R<Void> deliver(@PathVariable Long id, @Valid @RequestBody DeliverDTO dto) {
         orderService.deliver(id, dto.getExpressId(), dto.getExpressName(), dto.getExpressNo());
         return R.ok("发货成功", null);
+    }
+
+    @Operation(summary = "批量发货")
+    @PostMapping("/deliver-batch")
+    public R<Integer> deliverBatch(@RequestBody BatchDeliverDTO dto) {
+        int n = orderService.batchDeliver(dto.getOrderIds(), dto.getExpressId(), dto.getExpressName(), dto.getExpressNo());
+        return R.ok("成功发货 " + n + " 单", n);
     }
 }
