@@ -53,6 +53,7 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
     private final DistributionService distributionService;
     private final com.minimall.module.user.mapper.UserAddressMapper userAddressMapper;
     private final com.minimall.module.freight.service.FreightService freightService;
+    private final com.minimall.module.freeshipping.service.FreeShippingService freeShippingService;
 
     /** 内部结算行 */
     private static class Line {
@@ -108,6 +109,8 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         PromoResult promo = computePromo(userId, total, dto.getCouponListId());
         // 运费
         long freight = calcFreight(lines);
+        boolean freeShip = freeShippingService.hit(promo.payAmount);
+        if (freeShip) freight = 0;
 
         // 3. 创建订单
         Order order = new Order();
@@ -161,7 +164,12 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
             seckillService.commitDeduct(seckillGoods.getId(), dto.getNum());
         }
 
-        // 6. 清空已勾选购物车
+        // 6. 记录免邮（若命中）
+        if (freeShip) {
+            freeShippingService.record(userId, order.getId(), freight);
+        }
+
+        // 7. 清空已勾选购物车
         if ("cart".equals(dto.getBuyType())) {
             cartService.removeSelected(userId);
         }
@@ -179,6 +187,8 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         long total = lines.stream().mapToLong(l -> l.price * l.num).sum();
         PromoResult promo = computePromo(userId, total, dto.getCouponListId());
         long freight = calcFreight(lines);
+        boolean freeShip = freeShippingService.hit(promo.payAmount);
+        if (freeShip) freight = 0;
 
         OrderPreviewVO vo = new OrderPreviewVO();
         vo.setTotalAmount(total);
@@ -198,7 +208,7 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         return vo;
     }
 
-    /** 计算运费（订单所有结算行按模板计费累加） */
+    /** 计算运费（订单所有结算行按模板计费累加；由调用方决定是否免邮） */
     private long calcFreight(List<Line> lines) {
         long freight = 0;
         for (Line l : lines) {

@@ -8,6 +8,7 @@ import com.minimall.module.user.model.dto.RegisterDTO;
 import com.minimall.module.user.model.entity.User;
 import com.minimall.module.user.model.vo.LoginVO;
 import com.minimall.module.user.model.vo.UserVO;
+import com.minimall.module.lottery.service.LotteryService;
 import com.minimall.module.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,12 +30,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserAuthController {
 
     private final UserService userService;
+    private final LotteryService lotteryService;
 
     @Operation(summary = "注册")
     @SaIgnore
     @PostMapping("/register")
     public R<Long> register(@Valid @RequestBody RegisterDTO dto) {
-        return R.ok("注册成功", userService.register(dto));
+        Long id = userService.register(dto);
+        // 注册送奖励（失败不影响注册）
+        try {
+            lotteryService.grantRegisterAward(id);
+        } catch (Exception ignore) {
+        }
+        return R.ok("注册成功", id);
     }
 
     @Operation(summary = "登录")
