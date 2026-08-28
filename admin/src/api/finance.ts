@@ -1,0 +1,10 @@
+import http from './http'
+export const financeLogsApi = (params: any) => http.get('/admin/finance/logs', { params })
+export const financeCommissionsApi = (params: any) => http.get('/admin/finance/commissions', { params })
+export const brandPageApi = (params: any) => http.get('/admin/base/brand', { params })
+export const brandAllApi = () => http.get('/admin/base/brand/all')
+export const brandSaveApi = (data: any) => http.post('/admin/base/brand', data)
+export const brandDelApi = (id: number) => http.delete(`/admin/base/brand/${id}`)
+export const unitListApi = () => http.get('/admin/base/unit')
+export const unitSaveApi = (data: any) => http.post('/admin/base/unit', data)
+export const unitDelApi = (id: number) => http.delete(`/admin/base/unit/${id}`)

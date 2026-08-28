@@ -11,6 +11,22 @@
           <el-icon><Goods /></el-icon>
           <span>商品管理</span>
         </el-menu-item>
+        <el-menu-item index="/users">
+          <el-icon><Goods /></el-icon>
+          <span>用户管理</span>
+        </el-menu-item>
+        <el-menu-item index="/level">
+          <el-icon><Goods /></el-icon>
+          <span>会员等级</span>
+        </el-menu-item>
+        <el-menu-item index="/base">
+          <el-icon><Goods /></el-icon>
+          <span>品牌/单位</span>
+        </el-menu-item>
+        <el-menu-item index="/finance">
+          <el-icon><Present /></el-icon>
+          <span>财务明细</span>
+        </el-menu-item>
         <el-menu-item index="/freight">
           <el-icon><Goods /></el-icon>
           <span>运费模板</span>

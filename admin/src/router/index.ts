@@ -28,6 +28,30 @@ const router = createRouter({
           meta: { title: '商品管理' }
         },
         {
+          path: 'users',
+          name: 'users',
+          component: () => import('@/views/user/list.vue'),
+          meta: { title: '用户管理' }
+        },
+        {
+          path: 'level',
+          name: 'level',
+          component: () => import('@/views/user/level.vue'),
+          meta: { title: '会员等级' }
+        },
+        {
+          path: 'base',
+          name: 'base',
+          component: () => import('@/views/goods/base.vue'),
+          meta: { title: '品牌/单位' }
+        },
+        {
+          path: 'finance',
+          name: 'finance',
+          component: () => import('@/views/finance/index.vue'),
+          meta: { title: '财务明细' }
+        },
+        {
           path: 'freight',
           name: 'freight',
           component: () => import('@/views/setting/freight.vue'),
