@@ -29,7 +29,7 @@
         <el-form-item label="菜单权限">
           <el-tree ref="treeRef" :data="treeData" show-checkbox node-key="id"
             :props="{ children: 'children', label: 'name' }" style="max-height:300px; overflow:auto" />
-        </el-tree>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialog = false">取消</el-button>
