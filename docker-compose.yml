@@ -69,7 +69,7 @@ services:
       REDIS_PORT: "6379"
       TZ: Asia/Shanghai
     ports:
-      - "8080:8080"
+      - "0.0.0.0:18082:8080"   # 8080 被 octopus 占用；高位端口 + 绑 0.0.0.0 供局域网访问
     volumes:
       - upload-data:/app/upload
 
@@ -84,7 +84,7 @@ services:
     depends_on:
       - server
     ports:
-      - "8081:80"
+      - "0.0.0.0:18080:80"   # 前端网关：高位端口 + 绑 0.0.0.0
     volumes:
       - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./deploy/www:/usr/share/nginx/html:ro

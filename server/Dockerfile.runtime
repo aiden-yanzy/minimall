@@ -1,0 +1,7 @@
+# 运行镜像：直接使用本机 mvn 构建好的 jar（绕开容器内 Maven 拉依赖的网络问题）
+# 构建：mvn -DskipTests package  →  docker build -f server/Dockerfile.runtime -t minimall-server ./server
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+COPY target/minimall-server.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
