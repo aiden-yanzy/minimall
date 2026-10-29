@@ -43,8 +43,11 @@ public class GoodsCommentService extends ServiceImpl<GoodsCommentMapper, GoodsCo
                         .eq(GoodsComment::getGoodsId, goodsId)
                         .eq(GoodsComment::getIsShow, 1)
                         .orderByDesc(GoodsComment::getId));
-        Map<Long, User> users = userMapper.selectBatchIds(pg.getRecords().stream()
-                        .map(GoodsComment::getUserId).distinct().toList())
+        // 无评价时别查用户表：MyBatis-Plus 的 selectBatchIds(空集合) 会生成 IN () 直接 SQL 语法错
+        Map<Long, User> users = pg.getRecords().isEmpty()
+                ? java.util.Map.<Long, User>of()
+                : userMapper.selectBatchIds(pg.getRecords().stream()
+                        .map(GoodsComment::getUserId).filter(java.util.Objects::nonNull).distinct().toList())
                 .stream().collect(Collectors.toMap(User::getId, Function.identity(), (a, b) -> a));
         return pg.convert(c -> {
             GoodsCommentVO vo = new GoodsCommentVO();

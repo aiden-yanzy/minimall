@@ -11,17 +11,22 @@ import com.minimall.common.result.ResultCode;
 import com.minimall.module.goods.mapper.GoodsImageMapper;
 import com.minimall.module.goods.mapper.GoodsItemMapper;
 import com.minimall.module.goods.mapper.GoodsMapper;
+import com.minimall.module.goods.mapper.GoodsSpecMapper;
+import com.minimall.module.goods.mapper.GoodsSpecValueMapper;
 import com.minimall.module.goods.model.dto.GoodsSaveDTO;
 import com.minimall.module.goods.model.entity.Goods;
 import com.minimall.module.goods.model.entity.GoodsCategory;
 import com.minimall.module.goods.model.entity.GoodsImage;
 import com.minimall.module.goods.model.entity.GoodsItem;
+import com.minimall.module.goods.model.entity.GoodsSpec;
+import com.minimall.module.goods.model.entity.GoodsSpecValue;
 import com.minimall.module.goods.model.vo.GoodsVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,6 +37,8 @@ public class GoodsService extends ServiceImpl<GoodsMapper, Goods> {
 
     private final GoodsItemMapper goodsItemMapper;
     private final GoodsImageMapper goodsImageMapper;
+    private final GoodsSpecMapper goodsSpecMapper;
+    private final GoodsSpecValueMapper goodsSpecValueMapper;
     private final GoodsCategoryService categoryService;
 
     // ---------------- C 端 ----------------
@@ -77,6 +84,31 @@ public class GoodsService extends ServiceImpl<GoodsMapper, Goods> {
                         new LambdaQueryWrapper<GoodsItem>().eq(GoodsItem::getGoodsId, id))
                 .stream().map(GoodsVO.ItemVO::from).toList();
         vo.setItems(items);
+        // 规格组
+        List<GoodsSpec> specs = goodsSpecMapper.selectList(
+                new LambdaQueryWrapper<GoodsSpec>().eq(GoodsSpec::getGoodsId, id).orderByAsc(GoodsSpec::getSort));
+        if (!specs.isEmpty()) {
+            List<GoodsSpecValue> allValues = goodsSpecValueMapper.selectList(
+                    new LambdaQueryWrapper<GoodsSpecValue>().eq(GoodsSpecValue::getGoodsId, id));
+            List<GoodsVO.SpecVO> specVOs = new ArrayList<>();
+            for (GoodsSpec sp : specs) {
+                GoodsVO.SpecVO sv = new GoodsVO.SpecVO();
+                sv.setId(sp.getId());
+                sv.setName(sp.getName());
+                List<GoodsVO.SpecValueVO> vlist = new ArrayList<>();
+                for (GoodsSpecValue v : allValues) {
+                    if (!sp.getId().equals(v.getSpecId())) continue;
+                    GoodsVO.SpecValueVO vv = new GoodsVO.SpecValueVO();
+                    vv.setId(v.getId());
+                    vv.setValue(v.getValue());
+                    vv.setImage(v.getImage());
+                    vlist.add(vv);
+                }
+                sv.setValues(vlist);
+                specVOs.add(sv);
+            }
+            vo.setSpecs(specVOs);
+        }
         return vo;
     }
 
@@ -180,6 +212,36 @@ public class GoodsService extends ServiceImpl<GoodsMapper, Goods> {
                 item.setItemSn(goodsId + "_" + System.currentTimeMillis());
             }
             goodsItemMapper.insert(item);
+        }
+
+        // 保存规格组（先删后插，保证与前端编辑结果一致）
+        goodsSpecValueMapper.delete(new LambdaQueryWrapper<GoodsSpecValue>().eq(GoodsSpecValue::getGoodsId, goodsId));
+        goodsSpecMapper.delete(new LambdaQueryWrapper<GoodsSpec>().eq(GoodsSpec::getGoodsId, goodsId));
+        List<GoodsSaveDTO.SpecDTO> specs = dto.getSpecs();
+        if (specs != null && !specs.isEmpty()) {
+            int si = 0;
+            for (GoodsSaveDTO.SpecDTO sp : specs) {
+                if (StrUtil.isBlank(sp.getName())) continue;
+                GoodsSpec spec = new GoodsSpec();
+                spec.setGoodsId(goodsId);
+                spec.setName(sp.getName());
+                spec.setSort(si++);
+                goodsSpecMapper.insert(spec);
+                if (sp.getValues() == null) continue;
+                for (GoodsSaveDTO.SpecValueDTO v : sp.getValues()) {
+                    if (StrUtil.isBlank(v.getValue())) continue;
+                    GoodsSpecValue sv = new GoodsSpecValue();
+                    sv.setGoodsId(goodsId);
+                    sv.setSpecId(spec.getId());
+                    sv.setValue(v.getValue());
+                    sv.setImage(v.getImage());
+                    goodsSpecValueMapper.insert(sv);
+                }
+            }
+            goods.setSpecType(1);
+            this.lambdaUpdate().eq(Goods::getId, goodsId).set(Goods::getSpecType, 1).update();
+        } else {
+            this.lambdaUpdate().eq(Goods::getId, goodsId).set(Goods::getSpecType, 0).update();
         }
         return goodsId;
     }

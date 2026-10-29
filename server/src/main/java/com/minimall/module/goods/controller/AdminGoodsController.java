@@ -47,17 +47,19 @@ public class AdminGoodsController {
 
     @Operation(summary = "商品详情(编辑回显)")
     @GetMapping("/{id}")
-    public R<Goods> detail(@PathVariable Long id) {
-        return R.ok(goodsService.getById(id));
+    public R<com.minimall.module.goods.model.vo.GoodsVO> detail(@PathVariable Long id) {
+        return R.ok(goodsService.detail(id));
     }
 
     @Operation(summary = "创建商品")
+    @cn.dev33.satoken.annotation.SaCheckPermission(value = "goods:edit", type = "admin")
     @PostMapping
     public R<Long> create(@Valid @RequestBody GoodsSaveDTO dto) {
         return R.ok("创建成功", goodsService.save(dto));
     }
 
     @Operation(summary = "编辑商品")
+    @cn.dev33.satoken.annotation.SaCheckPermission(value = "goods:edit", type = "admin")
     @PutMapping("/{id}")
     public R<Long> update(@PathVariable Long id, @Valid @RequestBody GoodsSaveDTO dto) {
         dto.setId(id);
@@ -65,6 +67,7 @@ public class AdminGoodsController {
     }
 
     @Operation(summary = "上下架")
+    @cn.dev33.satoken.annotation.SaCheckPermission(value = "goods:edit", type = "admin")
     @PutMapping("/status/{id}")
     public R<Void> updateStatus(@PathVariable Long id, @RequestParam Integer status) {
         goodsService.updateStatus(id, status);
@@ -72,6 +75,7 @@ public class AdminGoodsController {
     }
 
     @Operation(summary = "删除商品")
+    @cn.dev33.satoken.annotation.SaCheckPermission(value = "goods:delete", type = "admin")
     @DeleteMapping("/{id}")
     public R<Void> remove(@PathVariable Long id) {
         goodsService.remove(id);

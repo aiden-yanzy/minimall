@@ -37,6 +37,23 @@ public class GoodsVO {
     /** SKU 列表 */
     private List<ItemVO> items;
 
+    /** 规格组（多规格时有值） */
+    private List<SpecVO> specs;
+
+    @Data
+    public static class SpecVO {
+        private Long id;
+        private String name;
+        private List<SpecValueVO> values;
+    }
+
+    @Data
+    public static class SpecValueVO {
+        private Long id;
+        private String value;
+        private String image;
+    }
+
     @Data
     public static class ItemVO {
         private Long id;

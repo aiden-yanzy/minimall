@@ -37,9 +37,28 @@ public class GoodsSaveDTO {
     /** 轮播图/视频 */
     private List<String> images;
 
+    /** 规格组（多规格时非空；空数组=单规格） */
+    private List<SpecDTO> specs;
+
     /** SKU 列表 */
     @NotNull(message = "至少需要一个SKU")
     private List<ItemDTO> items;
+
+    @Data
+    public static class SpecDTO {
+        private Long id;
+        @NotBlank(message = "规格名不能为空")
+        private String name;
+        private List<SpecValueDTO> values;
+    }
+
+    @Data
+    public static class SpecValueDTO {
+        private Long id;
+        @NotBlank(message = "规格值不能为空")
+        private String value;
+        private String image;
+    }
 
     @Data
     public static class ItemDTO {
