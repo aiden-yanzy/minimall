@@ -31,12 +31,22 @@ public class UserAuthController {
 
     private final UserService userService;
     private final LotteryService lotteryService;
+    private final com.minimall.module.distribution.service.DistributionService distributionService;
 
     @Operation(summary = "注册")
     @SaIgnore
     @PostMapping("/register")
     public R<Long> register(@Valid @RequestBody RegisterDTO dto) {
         Long id = userService.register(dto);
+        // 注册带邀请码/推荐人 → 自动绑定分销关系（失败不影响注册）
+        try {
+            if (dto.getInviteCode() != null && !dto.getInviteCode().isBlank()) {
+                distributionService.bindByCode(id, dto.getInviteCode());
+            } else if (dto.getReferrerId() != null) {
+                distributionService.bind(id, dto.getReferrerId());
+            }
+        } catch (Exception ignore) {
+        }
         // 注册送奖励（失败不影响注册）
         try {
             lotteryService.grantRegisterAward(id);

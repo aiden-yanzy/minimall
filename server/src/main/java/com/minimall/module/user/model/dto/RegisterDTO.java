@@ -21,4 +21,10 @@ public class RegisterDTO {
 
     @Schema(description = "注册渠道：h5/miniapp/wechat", example = "h5")
     private String channel;
+
+    /** 邀请码（分销推广链接带过来，注册即绑定推荐人） */
+    private String inviteCode;
+
+    /** 也可直接传推荐人 ID */
+    private Long referrerId;
 }

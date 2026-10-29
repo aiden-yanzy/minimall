@@ -33,6 +33,7 @@ public class MemberController {
 
     private final MemberService memberService;
     private final UserService userService;
+    private final com.minimall.module.user.service.UserLevelService levelService;
 
     // ---------- 地址 ----------
     @Operation(summary = "地址列表")
@@ -105,5 +106,19 @@ public class MemberController {
     public R<Void> clearFootprint() {
         memberService.clearFootprint(userService.getCurrentUserId());
         return R.ok();
+    }
+
+    // ---------- 会员等级 ----------
+
+    @Operation(summary = "我的会员等级（含下一档进度）")
+    @GetMapping("/level")
+    public R<com.minimall.module.user.model.vo.MemberLevelVO> myLevel() {
+        return R.ok(levelService.memberLevel(userService.getCurrentUserId()));
+    }
+
+    @Operation(summary = "等级权益一览")
+    @GetMapping("/level/list")
+    public R<java.util.List<com.minimall.module.user.model.entity.UserLevel>> levelList() {
+        return R.ok(levelService.enabledLevels());
     }
 }
