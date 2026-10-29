@@ -213,6 +213,9 @@ CREATE TABLE `goods_spec` (
   `goods_id`    BIGINT NOT NULL,
   `name`        VARCHAR(64) NOT NULL COMMENT '规格名,如颜色',
   `sort`        INT NOT NULL DEFAULT 0,
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `delete_flag` TINYINT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `idx_goods_id` (`goods_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品规格';
@@ -224,9 +227,11 @@ CREATE TABLE `goods_spec_value` (
   `spec_id`     BIGINT NOT NULL,
   `value`       VARCHAR(64) NOT NULL COMMENT '规格值,如红色',
   `image`       VARCHAR(255) NOT NULL DEFAULT '',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `delete_flag` TINYINT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  KEY `idx_spec_id` (`spec_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品规格值';
+  KEY `idx_spec_id` (`spec_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品规格值';
 
 DROP TABLE IF EXISTS `goods_image`;
 CREATE TABLE `goods_image` (
@@ -926,3 +931,19 @@ INSERT INTO `goods_image` (`goods_id`, `url`, `sort`) VALUES
 (1, '/file/demo/hp2.png', 1);
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- ----------------------------
+-- 订单物流轨迹（2026-10-28 新增：真实轨迹替代原模拟数据）
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `order_trace` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `order_id` bigint NOT NULL COMMENT '订单ID',
+  `trace_time` datetime NOT NULL COMMENT '发生时间',
+  `description` varchar(255) NOT NULL COMMENT '轨迹文案',
+  `operator` varchar(64) NOT NULL DEFAULT 'system' COMMENT '操作人',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `delete_flag` tinyint NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `idx_order` (`order_id`, `trace_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单物流轨迹';
