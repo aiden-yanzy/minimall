@@ -17,9 +17,11 @@ import com.minimall.module.marketing.service.CouponService;
 import com.minimall.module.marketing.service.FullReductionService;
 import com.minimall.module.order.mapper.OrderGoodsMapper;
 import com.minimall.module.order.mapper.OrderMapper;
+import com.minimall.module.order.mapper.OrderTraceMapper;
 import com.minimall.module.order.model.dto.OrderCreateDTO;
 import com.minimall.module.order.model.entity.Order;
 import com.minimall.module.order.model.entity.OrderGoods;
+import com.minimall.module.order.model.entity.OrderTrace;
 import com.minimall.module.order.model.vo.OrderPreviewVO;
 import com.minimall.module.order.model.vo.OrderVO;
 import com.minimall.module.seckill.model.entity.SeckillGoods;
@@ -43,11 +45,13 @@ import java.util.stream.Collectors;
 public class OrderService extends ServiceImpl<OrderMapper, Order> {
 
     private final OrderGoodsMapper orderGoodsMapper;
+    private final OrderTraceMapper orderTraceMapper;
     private final GoodsService goodsService;
     private final CartService cartService;
     private final CouponService couponService;
     private final FullReductionService fullReductionService;
     private final UserLevelService userLevelService;
+    private final com.minimall.module.user.mapper.UserMapper userMapper;
     private final UserService userService;
     private final SeckillService seckillService;
     private final DistributionService distributionService;
@@ -374,6 +378,16 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
                 .set(Order::getPaySn, paySn)
                 .set(Order::getPayTime, LocalDateTime.now())
                 .update();
+
+        // 支付成功才累加成长值（累计实付金额），再按成长值重算会员等级
+        long paid = order.getPayAmount() == null ? 0L : order.getPayAmount();
+        if (order.getUserId() != null) {
+            userMapper.update(null, com.baomidou.mybatisplus.core.toolkit.Wrappers.<User>lambdaUpdate()
+                    .eq(User::getId, order.getUserId())
+                    .setSql("total_consume = total_consume + " + paid)
+                    .setSql("total_order_num = total_order_num + 1"));
+            userLevelService.refreshLevel(order.getUserId());
+        }
     }
 
     /** 按订单号查询 */
@@ -424,6 +438,8 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
                 .set(Order::getExpressNo, expressNo)
                 .set(Order::getDeliveryTime, LocalDateTime.now())
                 .update();
+        addTrace(orderId, "商家已发货（" + (expressName == null ? "快递" : expressName)
+                + " " + (expressNo == null ? "-" : expressNo) + "）", "system");
     }
 
     /** 批量发货（指定快递，单号缺失则自动生成 前缀+序号） */
@@ -444,29 +460,126 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         return done;
     }
 
-    /** 物流轨迹（模拟，按订单状态生成） */
+    /** 物流轨迹（读 order_trace；历史订单没有落库数据时按订单状态兜底生成） */
     public List<Map<String, Object>> expressTraces(Long userId, Long orderId) {
         Order order = this.getById(orderId);
         if (order == null || !order.getUserId().equals(userId)) throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
-        List<Map<String, Object>> traces = new ArrayList<>();
-        traces.add(Map.of("time", order.getCreateTime(), "desc", "买家已下单"));
-        if (order.getPayTime() != null) traces.add(Map.of("time", order.getPayTime(), "desc", "订单支付成功"));
+        return tracesOf(order);
+    }
+
+    /** 后台查物流轨迹 */
+    public List<Map<String, Object>> adminTraces(Long orderId) {
+        Order order = this.getById(orderId);
+        if (order == null) throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
+        return tracesOf(order);
+    }
+
+    private List<Map<String, Object>> tracesOf(Order order) {
+        List<OrderTrace> rows = orderTraceMapper.selectList(Wrappers.<OrderTrace>lambdaQuery()
+                .eq(OrderTrace::getOrderId, order.getId())
+                .orderByAsc(OrderTrace::getTraceTime)
+                .orderByAsc(OrderTrace::getId));
+        List<Map<String, Object>> list = new ArrayList<>();
+        if (!rows.isEmpty()) {
+            for (OrderTrace t : rows) {
+                list.add(Map.of("time", t.getTraceTime(), "desc", t.getDescription()));
+            }
+            return list;
+        }
+        // 兜底：老订单没有轨迹记录，按既有时间点生成（只读，不再伪造未来节点）
+        list.add(Map.of("time", order.getCreateTime(), "desc", "买家已下单"));
+        if (order.getPayTime() != null) list.add(Map.of("time", order.getPayTime(), "desc", "订单支付成功"));
         if (order.getDeliveryTime() != null) {
-            traces.add(Map.of("time", order.getDeliveryTime(), "desc", "商家已发货（" + order.getExpressName() + " " + order.getExpressNo() + "）"));
-            traces.add(Map.of("time", order.getDeliveryTime().plusHours(6), "desc", "包裹已到达转运中心"));
-            traces.add(Map.of("time", order.getDeliveryTime().plusHours(30), "desc", "运输中，预计1-3天送达"));
+            list.add(Map.of("time", order.getDeliveryTime(), "desc", "商家已发货（"
+                    + (order.getExpressName() == null ? "快递" : order.getExpressName())
+                    + " " + (order.getExpressNo() == null ? "-" : order.getExpressNo()) + "）"));
         }
-        if (order.getReceiveTime() != null) {
-            traces.add(Map.of("time", order.getReceiveTime(), "desc", "已签收，感谢您的惠顾"));
-        } else if (order.getOrderStatus() == 2) {
-            traces.add(Map.of("time", LocalDateTime.now(), "desc", "派送中，请保持电话畅通"));
+        if (order.getReceiveTime() != null) list.add(Map.of("time", order.getReceiveTime(), "desc", "已签收，感谢您的惠顾"));
+        return list;
+    }
+
+    /** 追加一条物流轨迹 */
+    public void addTrace(Long orderId, String description, String operator) {
+        addTraceAt(orderId, description, operator, LocalDateTime.now());
+    }
+
+    public void addTraceAt(Long orderId, String description, String operator, LocalDateTime time) {
+        // 首条轨迹落库前，先把订单已有的历史节点补进来，避免时间线只剩新增的那一条
+        Long existing = orderTraceMapper.selectCount(Wrappers.<OrderTrace>lambdaQuery().eq(OrderTrace::getOrderId, orderId));
+        if (existing == null || existing == 0) {
+            Order o = this.getById(orderId);
+            if (o != null) {
+                if (o.getCreateTime() != null) insertTrace(orderId, "买家已下单", "system", o.getCreateTime());
+                if (o.getPayTime() != null) insertTrace(orderId, "订单支付成功", "system", o.getPayTime());
+                if (o.getDeliveryTime() != null) {
+                    insertTrace(orderId, "商家已发货（" + (o.getExpressName() == null ? "快递" : o.getExpressName())
+                            + " " + (o.getExpressNo() == null ? "-" : o.getExpressNo()) + "）", "system", o.getDeliveryTime());
+                }
+                if (o.getReceiveTime() != null) insertTrace(orderId, "已签收，感谢您的惠顾", "system", o.getReceiveTime());
+            }
         }
-        return traces;
+        insertTrace(orderId, description, operator, time);
+    }
+
+    private void insertTrace(Long orderId, String description, String operator, LocalDateTime time) {
+        OrderTrace t = new OrderTrace();
+        t.setOrderId(orderId);
+        t.setDescription(description);
+        t.setOperator(operator == null ? "system" : operator);
+        t.setTraceTime(time == null ? LocalDateTime.now() : time);
+        orderTraceMapper.insert(t);
+    }
+
+    /** demo 用：按快递节点顺序推进一条轨迹（后台点一下就走一步） */
+    private static final String[] TRACE_STEPS = {
+            "包裹已揽收", "已到达【始发转运中心】", "运输中，已发往【目的地转运中心】",
+            "已到达【目的地转运中心】", "派送中，请保持电话畅通"
+    };
+
+    @Transactional(rollbackFor = Exception.class)
+    public String advanceTrace(Long orderId, String operator) {
+        Order order = this.getById(orderId);
+        if (order == null) throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
+        if (order.getDeliveryTime() == null) throw new BusinessException("订单未发货，无法推进物流");
+        List<OrderTrace> rows = orderTraceMapper.selectList(Wrappers.<OrderTrace>lambdaQuery()
+                .eq(OrderTrace::getOrderId, orderId));
+        int idx = Math.min(rows.size(), TRACE_STEPS.length - 1);
+        // 已发过 N 条（含发货那条）→ 取下一条，最多到派送中
+        int step = Math.min(Math.max(rows.size() - 1, 0), TRACE_STEPS.length - 1);
+        String desc = TRACE_STEPS[step];
+        addTrace(orderId, desc, operator);
+        return desc;
+    }
+
+    /** 后台改价（仅待付款订单；差额记入 discountAmount，保留原价可追溯） */
+    @Transactional(rollbackFor = Exception.class)
+    public void changePrice(Long orderId, Long payAmount, String reason, String operator) {
+        Order order = this.getById(orderId);
+        if (order == null) throw new BusinessException(ResultCode.ORDER_NOT_EXIST);
+        if (order.getOrderStatus() != 0) throw new BusinessException("只有待付款订单可以改价");
+        if (payAmount == null || payAmount < 0) throw new BusinessException("改价金额不合法");
+        if (reason == null || reason.isBlank()) throw new BusinessException("改价必须填写原因");
+        long old = order.getPayAmount() == null ? 0L : order.getPayAmount();
+        long baseDiscount = order.getDiscountAmount() == null ? 0L : order.getDiscountAmount();
+        // 改价差额并入 discountAmount（负数为加价），payAmount 落到新值
+        long newDiscount = baseDiscount + (old - payAmount);
+        this.lambdaUpdate().eq(Order::getId, orderId)
+                .set(Order::getPayAmount, payAmount)
+                .set(Order::getDiscountAmount, newDiscount)
+                .update();
+        addTrace(orderId, "商家改价：" + (old / 100.0) + " 元 → " + (payAmount / 100.0)
+                + " 元（原因：" + reason + "）", operator);
     }
 
     /** 订单商品行（供售后使用） */
     public List<OrderGoods> listOrderGoods(Long orderId) {
         return orderGoodsMapper.selectList(Wrappers.<OrderGoods>lambdaQuery().eq(OrderGoods::getOrderId, orderId));
+    }
+
+    /** 按 ID 批量取订单商品（售后列表回填用） */
+    public List<OrderGoods> listOrderGoodsByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+        return orderGoodsMapper.selectBatchIds(ids);
     }
 
     /** 校验订单归属，返回订单 */
