@@ -37,6 +37,7 @@ public class AdminContentController {
     }
 
     @Operation(summary = "首页装修(保存 JSON)")
+    @cn.dev33.satoken.annotation.SaCheckPermission(value = "content:manage", type = "admin")
     @PostMapping("/decorate")
     public R<Void> saveDecorate(@RequestBody String json) {
         contentService.saveHomeDecorate(json);

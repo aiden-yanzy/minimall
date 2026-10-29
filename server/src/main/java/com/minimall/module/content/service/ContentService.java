@@ -66,6 +66,39 @@ public class ContentService {
     }
 
     public void saveHomeDecorate(String json) {
+        // 服务端校验：结构不合法直接拒绝，避免把 C 端首页搞挂
+        cn.hutool.json.JSONObject obj;
+        try {
+            obj = JSONUtil.parseObj(json);
+        } catch (Exception e) {
+            throw new com.minimall.common.exception.BusinessException("装修内容不是合法 JSON");
+        }
+        cn.hutool.json.JSONArray banners = obj.getJSONArray("banners");
+        if (banners == null || banners.isEmpty()) {
+            throw new com.minimall.common.exception.BusinessException("至少需要一张轮播图");
+        }
+        if (banners.size() > 8) {
+            throw new com.minimall.common.exception.BusinessException("轮播图最多 8 张");
+        }
+        for (int i = 0; i < banners.size(); i++) {
+            String img = banners.getJSONObject(i).getStr("image", "");
+            if (img == null || img.isBlank()) {
+                throw new com.minimall.common.exception.BusinessException("第 " + (i + 1) + " 张轮播图缺少图片地址");
+            }
+        }
+        cn.hutool.json.JSONArray navs = obj.getJSONArray("navs");
+        if (navs != null) {
+            if (navs.size() > 10) {
+                throw new com.minimall.common.exception.BusinessException("宫格导航最多 10 个");
+            }
+            for (int i = 0; i < navs.size(); i++) {
+                cn.hutool.json.JSONObject n = navs.getJSONObject(i);
+                if (n.getStr("name", "").isBlank()) {
+                    throw new com.minimall.common.exception.BusinessException("第 " + (i + 1) + " 个宫格缺少名称");
+                }
+            }
+        }
+
         SystemConfig cfg = configMapper.selectOne(Wrappers.<SystemConfig>lambdaQuery()
                 .eq(SystemConfig::getName, HOME_DECORATE).last("limit 1"));
         if (cfg == null) {
