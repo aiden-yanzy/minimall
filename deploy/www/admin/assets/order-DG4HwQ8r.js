@@ -1,1 +1,0 @@
-import{v as t}from"./index-BAyqwkZG.js";const o=a=>t.get("/admin/order",{params:a}),p=a=>t.get("/admin/after",{params:a}),s=a=>t.post(`/admin/after/${a}/approve`),i=(a,e)=>t.post(`/admin/after/${a}/reject`,null,{params:{reason:e}});export{p as a,s as b,i as c,o};

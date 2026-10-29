@@ -1,0 +1,1 @@
+import{A as s}from"./index-BMYedhQ4.js";const n=()=>s.get("/admin/role"),a=()=>s.get("/admin/role/menus"),o=t=>s.post("/admin/role",t),m=()=>s.get("/settings/admin/all"),p=(t,e)=>s.post(`/settings/admin/${t}`,e);export{o as a,p as b,a as m,n as r,m as s};

@@ -1,1 +1,0 @@
-import{v as s}from"./index-BAyqwkZG.js";const l=e=>s.get("/admin/user",{params:e}),p=(e,a)=>s.put(`/admin/user/${e}`,null,{params:a}),i=()=>s.get("/admin/level"),o=e=>s.post("/admin/level",e),n=e=>s.post(`/admin/level/remove/${e}`);export{p as a,o as b,n as c,i as l,l as u};

@@ -1,1 +1,0 @@
-import{z as e}from"./index-CjhpULiC.js";const o=s=>e.get("/shop/member/collect/status",{params:{goodsId:s}}),a=s=>e.post(`/shop/member/collect/toggle?goodsId=${s}`),m=()=>e.get("/shop/member/address"),c=s=>e.post("/shop/member/address",s),g=s=>e.get(`/shop/goods/${s}/comments`,{params:{page:1,size:6}});export{m as a,o as c,g,c as s,a as t};
