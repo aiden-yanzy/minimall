@@ -97,7 +97,10 @@ public class SeckillService extends ServiceImpl<SeckillGoodsMapper, SeckillGoods
                 .orderByAsc(SeckillActivity::getStartTime));
         return acts.stream().map(a -> {
             SeckillActivityVO vo = new SeckillActivityVO(a);
-            vo.setStarted(!a.getStartTime().isAfter(now));
+            // 抢购中 = 已开始 且 未结束（只判断开始会让过期场次显示"抢购中"，下单却报"秒杀已结束"）
+            boolean started = a.getStartTime() != null && !a.getStartTime().isAfter(now);
+            boolean notEnded = a.getEndTime() == null || a.getEndTime().isAfter(now);
+            vo.setStarted(started && notEnded);
             vo.setGoodsList(this.listGoods(a.getId()));
             return vo;
         }).collect(Collectors.toList());
@@ -154,10 +157,22 @@ public class SeckillService extends ServiceImpl<SeckillGoodsMapper, SeckillGoods
 
     /** 预扣 Redis 库存（原子），成功返回剩余 */
     public long preDeduct(Long sgId, int num) {
-        Long remain = redis.opsForValue().decrement(STOCK_KEY + sgId, num);
+        String key = STOCK_KEY + sgId;
+        // Redis 没有这把 key（新上秒杀商品 / Redis 重启 / key 过期）→ 按 DB 回源
+        if (Boolean.FALSE.equals(redis.hasKey(key))) {
+            initRedisStock(sgId);
+        }
+        Long remain = redis.opsForValue().decrement(key, num);
         if (remain != null && remain < 0) {
-            redis.opsForValue().increment(STOCK_KEY + sgId, num);
-            throw new BusinessException("手慢了，秒杀商品已抢完");
+            redis.opsForValue().increment(key, num);
+            // key 漂移（例如历史上被扣成 0 后 Key 仍存在）：回源校正一次再试，
+            // 避免「DB 有 50 件，用户却永远抢不到」
+            initRedisStock(sgId);
+            remain = redis.opsForValue().decrement(key, num);
+            if (remain != null && remain < 0) {
+                redis.opsForValue().increment(key, num);
+                throw new BusinessException("手慢了，秒杀商品已抢完");
+            }
         }
         return remain == null ? 0 : remain;
     }
