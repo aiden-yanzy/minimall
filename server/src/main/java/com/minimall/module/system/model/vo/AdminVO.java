@@ -9,7 +9,11 @@ public class AdminVO {
     private String account;
     private String name;
     private String roleName;
+    private String roleCode;
     private String avatar;
+
+    /** 权限码集合（* 表示全部） */
+    private java.util.List<String> permissions;
 
     public static AdminVO from(Admin a) {
         AdminVO vo = new AdminVO();

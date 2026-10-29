@@ -29,6 +29,7 @@ public class AdminAuthController {
 
     private final AdminService adminService;
 
+
     @Operation(summary = "后台登录")
     @SaIgnore
     @PostMapping("/login")
@@ -52,6 +53,9 @@ public class AdminAuthController {
     @GetMapping("/me")
     public R<AdminVO> me() {
         Admin admin = adminService.getCurrentAdmin();
-        return R.ok(AdminVO.from(admin));
+        AdminVO vo = AdminVO.from(admin);
+        vo.setRoleCode(admin.getRoleName());
+        vo.setPermissions(adminService.getCurrentPermissions());
+        return R.ok(vo);
     }
 }

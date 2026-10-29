@@ -4,6 +4,8 @@ import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [vue()],
+  // base 必须放在顶层，放在 build 里不生效（会导致部署到 /admin-web/ 后白屏）
+  base: '/admin-web/',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
@@ -24,8 +26,6 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: 'dist',
-    // 与 nginx 后台路由 /admin-web/ 对应
-    base: '/admin-web/'
+    outDir: 'dist'
   }
 })

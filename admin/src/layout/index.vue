@@ -3,77 +3,9 @@
     <el-aside width="210px" class="aside">
       <div class="logo">Minimall 商城</div>
       <el-menu :default-active="route.path" router background-color="#001529" text-color="#fff" active-text-color="#409eff">
-        <el-menu-item index="/dashboard">
-          <el-icon><DataBoard /></el-icon>
-          <span>工作台</span>
-        </el-menu-item>
-        <el-menu-item index="/goods">
-          <el-icon><Goods /></el-icon>
-          <span>商品管理</span>
-        </el-menu-item>
-        <el-menu-item index="/users">
-          <el-icon><Goods /></el-icon>
-          <span>用户管理</span>
-        </el-menu-item>
-        <el-menu-item index="/level">
-          <el-icon><Goods /></el-icon>
-          <span>会员等级</span>
-        </el-menu-item>
-        <el-menu-item index="/base">
-          <el-icon><Goods /></el-icon>
-          <span>品牌/单位</span>
-        </el-menu-item>
-        <el-menu-item index="/finance">
-          <el-icon><Present /></el-icon>
-          <span>财务明细</span>
-        </el-menu-item>
-        <el-menu-item index="/roles">
-          <el-icon><Goods /></el-icon>
-          <span>角色权限</span>
-        </el-menu-item>
-        <el-menu-item index="/settings">
-          <el-icon><Goods /></el-icon>
-          <span>设置中心</span>
-        </el-menu-item>
-        <el-menu-item index="/extras">
-          <el-icon><Present /></el-icon>
-          <span>抽奖/注册送/免邮</span>
-        </el-menu-item>
-        <el-menu-item index="/freight">
-          <el-icon><Goods /></el-icon>
-          <span>运费模板</span>
-        </el-menu-item>
-        <el-menu-item index="/comments">
-          <el-icon><Goods /></el-icon>
-          <span>评价管理</span>
-        </el-menu-item>
-        <el-menu-item index="/order">
-          <el-icon><Tickets /></el-icon>
-          <span>订单管理</span>
-        </el-menu-item>
-        <el-menu-item index="/after">
-          <el-icon><Tickets /></el-icon>
-          <span>售后管理</span>
-        </el-menu-item>
-        <el-menu-item index="/marketing">
-          <el-icon><Present /></el-icon>
-          <span>营销管理</span>
-        </el-menu-item>
-        <el-menu-item index="/integral">
-          <el-icon><Present /></el-icon>
-          <span>积分商城</span>
-        </el-menu-item>
-        <el-menu-item index="/seckill">
-          <el-icon><Present /></el-icon>
-          <span>秒杀管理</span>
-        </el-menu-item>
-        <el-menu-item index="/wallet">
-          <el-icon><Present /></el-icon>
-          <span>提现审核</span>
-        </el-menu-item>
-        <el-menu-item index="/content">
-          <el-icon><Present /></el-icon>
-          <span>内容装修</span>
+        <el-menu-item v-for="m in visibleMenus" :key="m.path" :index="m.path">
+          <el-icon><component :is="m.icon" /></el-icon>
+          <span>{{ m.title }}</span>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -99,8 +31,33 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataBoard, Goods, Tickets, Present } from '@element-plus/icons-vue'
+import { DataBoard, Goods, Tickets, Present, TrendCharts } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/store/auth'
+import { computed } from 'vue'
+
+/** 菜单 → 权限码（与后台 menu 表一致） */
+const MENUS = [
+  { path: '/dashboard', title: '工作台', icon: DataBoard, perm: '' },
+  { path: '/goods', title: '商品管理', icon: Goods, perm: 'goods:list' },
+  { path: '/users', title: '用户管理', icon: Goods, perm: 'user:manage' },
+  { path: '/level', title: '会员等级', icon: Goods, perm: 'user:level' },
+  { path: '/base', title: '品牌/单位', icon: Goods, perm: 'base:manage' },
+  { path: '/finance', title: '财务明细', icon: Present, perm: 'finance:log' },
+  { path: '/roles', title: '角色权限', icon: Goods, perm: 'system:role' },
+  { path: '/settings', title: '设置中心', icon: Goods, perm: 'system:setting' },
+  { path: '/extras', title: '抽奖/注册送/免邮', icon: Present, perm: 'lottery:manage' },
+  { path: '/freight', title: '运费模板', icon: Goods, perm: 'freight:manage' },
+  { path: '/comments', title: '评价管理', icon: Goods, perm: 'goods:comment' },
+  { path: '/order', title: '订单管理', icon: Tickets, perm: 'order:list' },
+  { path: '/stat', title: '销售统计', icon: TrendCharts, perm: 'order:list' },
+  { path: '/after', title: '售后管理', icon: Tickets, perm: 'after:manage' },
+  { path: '/marketing', title: '营销管理', icon: Present, perm: 'marketing:manage' },
+  { path: '/integral', title: '积分商城', icon: Present, perm: 'integral:manage' },
+  { path: '/seckill', title: '秒杀管理', icon: Present, perm: 'seckill:manage' },
+  { path: '/wallet', title: '提现审核', icon: Present, perm: 'finance:withdraw' },
+  { path: '/content', title: '内容装修', icon: Present, perm: 'content:manage' }
+]
+const visibleMenus = computed(() => MENUS.filter((m) => auth.can(m.perm)))
 
 const route = useRoute()
 const router = useRouter()

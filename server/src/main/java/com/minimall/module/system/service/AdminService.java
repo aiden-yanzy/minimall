@@ -53,4 +53,9 @@ public class AdminService extends ServiceImpl<AdminMapper, Admin> {
     public Admin getCurrentAdmin() {
         return this.getById(getCurrentAdminId());
     }
+
+    /** 当前管理员的权限码集合（走 admin 体系，别用默认 StpUtil） */
+    public java.util.List<String> getCurrentPermissions() {
+        return stpAdmin.getPermissionList();
+    }
 }

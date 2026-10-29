@@ -88,6 +88,12 @@ const router = createRouter({
           meta: { title: '订单管理' }
         },
         {
+          path: 'stat',
+          name: 'stat',
+          component: () => import('@/views/stat/report.vue'),
+          meta: { title: '销售统计' }
+        },
+        {
           path: 'after',
           name: 'after',
           component: () => import('@/views/order/after.vue'),
