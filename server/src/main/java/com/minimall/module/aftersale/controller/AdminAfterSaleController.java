@@ -31,7 +31,7 @@ public class AdminAfterSaleController {
 
     @Operation(summary = "售后列表")
     @GetMapping
-    public R<List<AfterSale>> list(@RequestParam(required = false) Integer status) {
+    public R<List<com.minimall.module.aftersale.model.vo.AfterSaleVO>> list(@RequestParam(required = false) Integer status) {
         return R.ok(afterSaleService.adminList(status));
     }
 

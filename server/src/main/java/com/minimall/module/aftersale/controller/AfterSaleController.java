@@ -40,7 +40,7 @@ public class AfterSaleController {
 
     @Operation(summary = "我的售后列表")
     @GetMapping
-    public R<List<AfterSale>> myList() {
+    public R<List<com.minimall.module.aftersale.model.vo.AfterSaleVO>> myList() {
         return R.ok(afterSaleService.myList(userService.getCurrentUserId()));
     }
 

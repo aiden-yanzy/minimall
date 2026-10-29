@@ -27,6 +27,8 @@ public class AfterSaleService extends ServiceImpl<AfterSaleMapper, AfterSale> {
     private final OrderService orderService;
     private final GoodsService goodsService;
     private final SeckillService seckillService;
+    private final com.minimall.module.wallet.service.WalletService walletService;
+    private final com.minimall.module.user.mapper.UserMapper userMapper;
 
     /** 申请售后 */
     public Long create(Long userId, AfterSaleCreateDTO dto) {
@@ -63,9 +65,54 @@ public class AfterSaleService extends ServiceImpl<AfterSaleMapper, AfterSale> {
         return as.getId();
     }
 
-    /** 我的售后列表 */
-    public List<AfterSale> myList(Long userId) {
-        return this.lambdaQuery().eq(AfterSale::getUserId, userId).orderByDesc(AfterSale::getId).list();
+    /** 我的售后列表（带订单号/商品信息） */
+    public List<com.minimall.module.aftersale.model.vo.AfterSaleVO> myList(Long userId) {
+        return enrich(this.lambdaQuery().eq(AfterSale::getUserId, userId)
+                .orderByDesc(AfterSale::getId).list());
+    }
+
+    /** 后台售后列表（带订单号/商品/买家信息） */
+    public List<com.minimall.module.aftersale.model.vo.AfterSaleVO> adminList(Integer status) {
+        return enrich(this.lambdaQuery()
+                .eq(status != null, AfterSale::getStatus, status)
+                .orderByDesc(AfterSale::getId).list());
+    }
+
+    /** 一次性补齐订单号、商品、买家（避免列表 N+1） */
+    private List<com.minimall.module.aftersale.model.vo.AfterSaleVO> enrich(List<AfterSale> list) {
+        if (list.isEmpty()) return List.of();
+        List<Long> orderIds = list.stream().map(AfterSale::getOrderId).filter(java.util.Objects::nonNull).distinct().toList();
+        List<Long> ogIds = list.stream().map(AfterSale::getOrderGoodsId).filter(java.util.Objects::nonNull).distinct().toList();
+        List<Long> userIds = list.stream().map(AfterSale::getUserId).filter(java.util.Objects::nonNull).distinct().toList();
+
+        java.util.Map<Long, Order> orders = orderIds.isEmpty() ? java.util.Map.of()
+                : orderService.listByIds(orderIds).stream()
+                .collect(java.util.stream.Collectors.toMap(Order::getId, o -> o, (a, b) -> a));
+        java.util.Map<Long, com.minimall.module.order.model.entity.OrderGoods> goods = ogIds.isEmpty() ? java.util.Map.of()
+                : orderService.listOrderGoodsByIds(ogIds).stream()
+                .collect(java.util.stream.Collectors.toMap(com.minimall.module.order.model.entity.OrderGoods::getId, g -> g, (a, b) -> a));
+        java.util.Map<Long, com.minimall.module.user.model.entity.User> users = userIds.isEmpty() ? java.util.Map.of()
+                : userMapper.selectBatchIds(userIds).stream()
+                .collect(java.util.stream.Collectors.toMap(com.minimall.module.user.model.entity.User::getId, u -> u, (a, b) -> a));
+
+        return list.stream().map(a -> {
+            com.minimall.module.aftersale.model.vo.AfterSaleVO vo =
+                    com.minimall.module.aftersale.model.vo.AfterSaleVO.from(a);
+            Order o = orders.get(a.getOrderId());
+            if (o != null) vo.setOrderSn(o.getOrderSn());
+            com.minimall.module.order.model.entity.OrderGoods og = goods.get(a.getOrderGoodsId());
+            if (og != null) {
+                vo.setGoodsName(og.getGoodsName());
+                vo.setGoodsImage(og.getGoodsImage());
+                vo.setSpecValueStr(og.getSpecValueStr());
+            }
+            com.minimall.module.user.model.entity.User u = users.get(a.getUserId());
+            if (u != null) {
+                vo.setNickname(u.getNickname());
+                vo.setMobile(u.getMobile());
+            }
+            return vo;
+        }).toList();
     }
 
     /** 用户取消售后 */
@@ -84,12 +131,6 @@ public class AfterSaleService extends ServiceImpl<AfterSaleMapper, AfterSale> {
     // ---------------- 后台 ----------------
 
     /** 后台售后列表 */
-    public List<AfterSale> adminList(Integer status) {
-        return this.lambdaQuery()
-                .eq(status != null, AfterSale::getStatus, status)
-                .orderByDesc(AfterSale::getId)
-                .list();
-    }
 
     /** 同意退款（P2 模拟退款，直接置为已退款） */
     @Transactional(rollbackFor = Exception.class)
@@ -112,6 +153,12 @@ public class AfterSaleService extends ServiceImpl<AfterSaleMapper, AfterSale> {
                 goodsService.minusSales(og.getGoodsId(), og.getNum());
             }
             orderService.updateOrderGoodsAfterSale(as.getOrderGoodsId());
+        }
+        // 退款到余额（原路退回是空壳，这里落成余额 + 流水，C 端「我的钱包」可查）
+        long refund = as.getRefundAmount() == null ? 0L : as.getRefundAmount();
+        if (refund > 0 && as.getUserId() != null) {
+            walletService.changeBalance(as.getUserId(), refund, 4,
+                    "售后退款 " + as.getAfterSaleSn());
         }
         this.lambdaUpdate().eq(AfterSale::getId, id)
                 .set(AfterSale::getStatus, 3)
