@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,21 +38,46 @@ public class DistributionController {
         return R.ok("绑定成功", null);
     }
 
+    @Operation(summary = "用邀请码绑定推荐人")
+    @PostMapping("/bind-code")
+    public R<Void> bindByCode(@RequestParam String code) {
+        distributionService.bindByCode(userService.getCurrentUserId(), code);
+        return R.ok("绑定成功", null);
+    }
+
     @Operation(summary = "我的推荐人")
     @GetMapping("/referrer")
     public R<User> referrer() {
         return R.ok(distributionService.referrer(userService.getCurrentUserId()));
     }
 
-    @Operation(summary = "我的佣金概览")
+    @Operation(summary = "分销中心概览（佣金/团队/邀请码/等级进度）")
     @GetMapping("/overview")
     public R<Map<String, Object>> overview() {
+        return R.ok(distributionService.overview(userService.getCurrentUserId()));
+    }
+
+    @Operation(summary = "我的邀请码与推广链接")
+    @GetMapping("/invite")
+    public R<Map<String, Object>> invite() {
         Long userId = userService.getCurrentUserId();
-        Map<String, Object> m = new HashMap<>();
-        m.put("totalCommission", distributionService.myCommission(userId));
-        m.put("balance", userService.getById(userId).getBalance());
-        m.put("orders", distributionService.listSettled(userId));
+        String code = distributionService.inviteCode(userId);
+        java.util.Map<String, Object> m = new java.util.HashMap<>();
+        m.put("inviteCode", code);
+        m.put("inviteLink", "/#/pages/user/login?ref=" + code);
         return R.ok(m);
+    }
+
+    @Operation(summary = "我的团队（下级成员与贡献佣金）")
+    @GetMapping("/team")
+    public R<List<Map<String, Object>>> team() {
+        return R.ok(distributionService.team(userService.getCurrentUserId()));
+    }
+
+    @Operation(summary = "我的分销等级")
+    @GetMapping("/level")
+    public R<Map<String, Object>> myLevel() {
+        return R.ok(distributionService.myLevel(userService.getCurrentUserId()));
     }
 
     @Operation(summary = "佣金明细")

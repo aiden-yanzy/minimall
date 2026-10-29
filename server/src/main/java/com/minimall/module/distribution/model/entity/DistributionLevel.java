@@ -14,6 +14,9 @@ public class DistributionLevel {
     private String name;
     private Integer level;
     private Integer commissionRate;
+
+    /** 升级门槛：累计佣金（分），0 = 无门槛 */
+    private Long upgradeAmount;
     private String upgradeCondition;
     private Integer status;
     private LocalDateTime createTime;
