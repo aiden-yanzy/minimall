@@ -20,6 +20,7 @@
           <view>￥{{ fen2yuan(g.price) }}</view>
           <view class="g-num">x{{ g.num }}</view>
           <view v-if="order.orderStatus === 3 && g.isComment !== 1" class="comment-btn" @click="openComment(g)">评价</view>
+          <view v-if="canAfterSale(g)" class="comment-btn" @click="goAfterSale(g)">售后</view>
         </view>
       </view>
     </view>
@@ -38,7 +39,11 @@
       <view class="btn primary" @click="pay">立即支付</view>
     </view>
     <view v-if="order.orderStatus === 2" class="action-bar">
+      <view class="btn" @click="goAfterSale(order.goodsList[0])">申请售后</view>
       <view class="btn primary" @click="confirmReceive">确认收货</view>
+    </view>
+    <view v-if="order.orderStatus === 3" class="action-bar">
+      <view class="btn" @click="goAfterSale(order.goodsList[0])">申请售后</view>
     </view>
 
     <!-- 评价弹层 -->
@@ -112,6 +117,17 @@ async function confirmReceive() {
     uni.showToast({ title: '已确认收货' })
     load()
   })
+}
+
+/** 已支付且该商品未在售后中，才允许申请 */
+function canAfterSale(g) {
+  const s = order.value.orderStatus
+  if (!g || s < 1 || s > 3) return false
+  return g.isAfterSale !== 1
+}
+function goAfterSale(g) {
+  if (!g) return uni.showToast({ title: '暂无可售后商品', icon: 'none' })
+  uni.navigateTo({ url: `/pages/after/apply?orderId=${order.value.id}&orderGoodsId=${g.id}` })
 }
 
 function copy(text) {

@@ -157,6 +157,30 @@
       }
     },
     {
+      "path": "pages/after/list",
+      "style": {
+        "navigationBarTitleText": "我的售后"
+      }
+    },
+    {
+      "path": "pages/after/apply",
+      "style": {
+        "navigationBarTitleText": "申请售后"
+      }
+    },
+    {
+      "path": "pages/distribution/index",
+      "style": {
+        "navigationBarTitleText": "分销中心"
+      }
+    },
+    {
+      "path": "pages/search/index",
+      "style": {
+        "navigationBarTitleText": "搜索"
+      }
+    },
+    {
       "path": "pages/lucky/draw",
       "style": {
         "navigationBarTitleText": "幸运抽奖"

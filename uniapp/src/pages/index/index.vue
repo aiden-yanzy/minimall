@@ -14,12 +14,12 @@
     <!-- 宫格导航(装修配置) -->
     <view class="nav-grid" v-if="decorate.navs?.length">
       <view v-for="(n, i) in decorate.navs" :key="i" class="nav-cell" @click="go(n.link)">
-        <view class="nav-icon">{{ n.name?.slice(0, 1) }}</view>
+        <image class="nav-icon" :src="navIcon(n.name)" mode="aspectFit" />
         <view class="nav-name">{{ n.name }}</view>
       </view>
     </view>
 
-    <view class="search-bar" @click="go('/pages/goods/list')">
+    <view class="search-bar" @click="go('/pages/search/index')">
       <text class="search-ph">搜索商品</text>
     </view>
 
@@ -48,6 +48,22 @@ import { fen2yuan } from '@/utils/format'
 
 const list = ref([])
 const decorate = reactive({ banners: [], navs: [], goodsTitle: '' })
+
+/** 统一风格的线性图标（内联 SVG，避免混用 emoji 导致风格不统一） */
+const NAV_SVG = {
+  积分商城: '<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 13h18"/><path d="M12 9v12"/><path d="M12 9C10 9 8 8 8 6a2 2 0 0 1 4-.6A2 2 0 0 1 16 6c0 2-2 3-4 3z"/>',
+  限时秒杀: '<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/>',
+  我的拼团: '<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17.5" cy="10" r="2.5"/><path d="M15 20a5 5 0 0 1 6-4.6"/>',
+  领券中心: '<path d="M3 9V6h18v3a3 3 0 0 0 0 6v3H3v-3a3 3 0 0 0 0-6z"/><path d="M12 7v10" stroke-dasharray="2 2"/>',
+  售前预售: '<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12h11l2-8H6"/>',
+  在线客服: '<path d="M21 12a8 8 0 1 1-3.2-6.4"/><path d="M21 4v6h-6"/><path d="M8 13c1 1.5 2.5 2 4 2s3-.5 4-2"/>',
+}
+function navIcon(name) {
+  const body = NAV_SVG[name] || '<circle cx="12" cy="12" r="8"/>'
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#3b6ef5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
+}
+
 const defaultImg = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 
 async function load() {
@@ -108,26 +124,23 @@ onPullDownRefresh(async () => {
   opacity: 0.9;
 }
 .nav-grid {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
   background: #fff;
   border-radius: 16rpx;
-  padding: 20rpx 0;
+  padding: 20rpx 8rpx 16rpx;
   margin-top: 16rpx;
 }
 .nav-cell {
-  flex: 1;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .nav-icon {
-  width: 90rpx;
-  height: 90rpx;
-  line-height: 90rpx;
-  margin: 0 auto;
-  border-radius: 50%;
-  background: #fff0f0;
-  color: #ff2d2d;
-  font-size: 36rpx;
-  font-weight: bold;
+  width: 76rpx;
+  height: 76rpx;
+  margin: 0 auto 8rpx;
+  display: block;
 }
 .nav-name {
   margin-top: 10rpx;

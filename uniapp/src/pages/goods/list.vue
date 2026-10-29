@@ -47,10 +47,15 @@ const keyword = ref('')
 async function loadCat() {
   const res = await getCategoryTree()
   cats.value = res.data
+  // 有关键词时不强制选分类，避免搜索被分类过滤掉
+  if (keyword.value) {
+    load()
+    return
+  }
   if (cats.value.length && currentCat.value === null) {
     currentCat.value = cats.value[0].id
-    load()
   }
+  load()
 }
 async function load() {
   const res = await getGoodsList({ page: 1, size: 50, categoryId: currentCat.value, keyword: keyword.value })
@@ -67,7 +72,11 @@ function goDetail(id) {
   uni.navigateTo({ url: '/pages/goods/detail?id=' + id })
 }
 
-onLoad(loadCat)
+onLoad((q) => {
+  if (q && q.keyword) keyword.value = decodeURIComponent(q.keyword)
+  if (q && q.categoryId) currentCat.value = Number(q.categoryId)
+  loadCat()
+})
 onPullDownRefresh(async () => {
   await load()
   uni.stopPullDownRefresh()

@@ -26,6 +26,8 @@
 
     <view class="menu">
       <view class="menu-item" @click="go('/pages/order/list')">我的订单</view>
+      <view class="menu-item" @click="go('/pages/after/list')">我的售后</view>
+      <view class="menu-item" @click="go('/pages/distribution/index')">分销中心</view>
       <view class="menu-item" @click="go('/pages/member/collect')">我的收藏</view>
       <view class="menu-item" @click="go('/pages/member/footprint')">浏览足迹</view>
       <view class="menu-item" @click="go('/pages/member/address')">收货地址</view>
