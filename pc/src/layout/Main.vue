@@ -10,8 +10,13 @@
         <nav class="nav">
           <router-link to="/">首页</router-link>
           <router-link to="/products">全部商品</router-link>
+          <router-link to="/seckill">秒杀</router-link>
+          <router-link to="/coupons">领券</router-link>
+          <router-link to="/integral">积分商城</router-link>
           <router-link to="/cart"><el-badge :value="cart.count" :hidden="!user.token || !cart.count">购物车</el-badge></router-link>
           <router-link to="/orders">我的订单</router-link>
+          <router-link v-if="user.token" to="/member">会员中心</router-link>
+          <router-link v-if="user.token" to="/distribution">分销中心</router-link>
           <template v-if="user.token">
             <span class="uname">{{ user.userInfo?.nickname }}</span>
             <a style="cursor:pointer" @click="logout">退出</a>

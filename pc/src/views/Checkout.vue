@@ -62,6 +62,7 @@ import { getGoodsDetail } from '@/api/goods'
 import { getCartList } from '@/api/cart'
 import { getAddresses, saveAddress } from '@/api/member'
 import { previewOrder, createOrder } from '@/api/order'
+import { seckillList } from '@/api/promo'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
@@ -120,6 +121,11 @@ function buildDto() {
     dto.goodsItemId = Number(route.query.goodsItemId)
     dto.num = Number(route.query.num || 1)
   }
+  if (buyType.value === 'seckill') {
+    // 秒杀单：后端按 seckillGoodsId 取价，不用 goodsItemId
+    dto.seckillGoodsId = Number(route.query.seckillGoodsId)
+    dto.num = Number(route.query.num || 1)
+  }
   return dto
 }
 
@@ -128,6 +134,24 @@ async function init() {
   if (buyType.value === 'cart') {
     const res = await getCartList()
     goodsList.value = res.data.filter((i) => i.isSelected === 1)
+  } else if (buyType.value === 'seckill') {
+    // 秒杀商品展示：从秒杀列表里找出当前场次商品
+    const sl = await seckillList()
+    const acts = sl.data || []
+    let found = null
+    acts.forEach((a) => (a.goodsList || []).forEach((g) => {
+      if (String(g.id) === String(route.query.seckillGoodsId)) found = g
+    }))
+    if (found) {
+      goodsList.value = [{
+        key: 1,
+        image: found.goodsImage,
+        name: found.goodsName,
+        spec: found.specValueStr || '秒杀',
+        price: found.seckillPrice,
+        num: Number(route.query.num || 1)
+      }]
+    }
   } else {
     const res = await getGoodsDetail(route.query.goodsId)
     const it = res.data.items.find((i) => i.id == route.query.goodsItemId)

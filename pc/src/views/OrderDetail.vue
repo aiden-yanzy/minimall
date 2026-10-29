@@ -22,7 +22,26 @@
       <div v-for="g in order.goodsList" :key="g.id" class="g">
         <img :src="g.goodsImage" class="img" />
         <div>{{ g.goodsName }} <span class="spec">{{ g.specValueStr }}</span></div>
-        <div class="r">￥{{ fen2yuan(g.price) }} × {{ g.num }} = ￥{{ fen2yuan(g.totalPrice) }}</div>
+        <div class="r">
+          ￥{{ fen2yuan(g.price) }} × {{ g.num }} = ￥{{ fen2yuan(g.totalPrice) }}
+          <div class="g-ops">
+            <el-button
+              v-if="canAfterSale(g)"
+              link
+              type="primary"
+              size="small"
+              @click="$router.push({ path: '/after/apply', query: { orderId: order.id, orderGoodsId: g.id } })"
+            >申请售后</el-button>
+            <el-button
+              v-if="order.orderStatus === 3 && g.isComment !== 1"
+              link
+              type="warning"
+              size="small"
+              @click="openComment(g)"
+            >评价</el-button>
+            <el-tag v-if="g.isAfterSale === 1" size="small" type="info">售后中</el-tag>
+          </div>
+        </div>
       </div>
 
       <el-dialog v-model="showTraces" title="物流轨迹" width="480px">
@@ -31,6 +50,22 @@
             {{ t.desc }}
           </el-timeline-item>
         </el-timeline>
+      </el-dialog>
+
+      <el-dialog v-model="showComment" title="评价商品" width="460px">
+        <div class="cm-goods">
+          <img :src="commentGoods?.goodsImage" class="img" />
+          <span>{{ commentGoods?.goodsName }}</span>
+        </div>
+        <div class="cm-row">
+          <span class="cm-label">评分</span>
+          <el-rate v-model="score" />
+        </div>
+        <el-input v-model="commentText" type="textarea" :rows="3" placeholder="说说使用体验吧" />
+        <template #footer>
+          <el-button @click="showComment = false">取消</el-button>
+          <el-button type="danger" :loading="commenting" @click="submitComment">提交评价</el-button>
+        </template>
       </el-dialog>
 
       <div class="actions">
@@ -46,7 +81,9 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { getOrderDetail, getOrderTraces, mockPay, cancelOrder, receive } from '@/api/order'
+import { createComment } from '@/api/promo'
 
 const route = useRoute()
 const order = ref({})
@@ -60,6 +97,42 @@ async function openTraces() {
   const res = await getOrderTraces(route.params.id)
   traces.value = res.data
   showTraces.value = true
+}
+
+// ---------- 售后 / 评价 ----------
+const showComment = ref(false)
+const commentGoods = ref(null)
+const score = ref(5)
+const commentText = ref('')
+const commenting = ref(false)
+
+function canAfterSale(g) {
+  const s = order.value.orderStatus
+  if (!g || s < 1 || s > 3) return false
+  return g.isAfterSale !== 1
+}
+function openComment(g) {
+  commentGoods.value = g
+  score.value = 5
+  commentText.value = ''
+  showComment.value = true
+}
+async function submitComment() {
+  if (!commentText.value.trim()) return ElMessage.warning('请输入评价内容')
+  commenting.value = true
+  try {
+    await createComment({
+      orderId: order.value.id,
+      orderGoodsId: commentGoods.value.id,
+      score: score.value,
+      content: commentText.value.trim()
+    })
+    ElMessage.success('评价成功')
+    showComment.value = false
+    load()
+  } finally {
+    commenting.value = false
+  }
 }
 
 async function load() {
@@ -82,4 +155,8 @@ onMounted(load)
 .r { margin-left: auto; }
 .actions { text-align: right; padding-top: 16px; }
 .red { color: #ff2d2d; }
+.g-ops { display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px; align-items: center; }
+.cm-goods { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.cm-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.cm-label { font-size: 13px; color: #666; }
 </style>
