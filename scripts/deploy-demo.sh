@@ -38,15 +38,23 @@ command -v docker >/dev/null 2>&1 || { bad "没装 Docker，先执行：curl -fs
 docker compose version >/dev/null 2>&1 || { bad "没装 Docker Compose v2（docker compose 子命令）；Compose v1 已停止维护"; exit 1; }
 ok "docker $(docker --version | awk '{print $3}' | tr -d ,)"
 
-MEM_MB=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo 2>/dev/null || echo 0)
+if [ -r /proc/meminfo ]; then
+  MEM_MB=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
+elif command -v sysctl >/dev/null 2>&1; then
+  # macOS / BSD：sysctl 返回的是字节
+  MEM_MB=$(( $(sysctl -n hw.memsize 2>/dev/null || echo 0) / 1024 / 1024 ))
+else
+  MEM_MB=0
+fi
 if [ "$MEM_MB" -gt 0 ] && [ "$MEM_MB" -lt 1800 ]; then
   bad "内存只有 ${MEM_MB}MB，mysql + redis + 后端至少需要 ~1.5G，建议 2G 以上"
   exit 1
 fi
 ok "内存 ${MEM_MB}MB"
 
-AVAIL_GB=$(df -Bg "$HOME" | awk 'NR==2 {gsub("G","",$4); print $4}')
-[ "${AVAIL_GB:-0}" -lt 4 ] && { bad "磁盘可用 ${AVAIL_GB}G，建议留 5G 以上"; exit 1; }
+AVAIL_KB=$(df -k "$HOME" | awk 'NR==2 {print $4}')
+AVAIL_GB=$(( ${AVAIL_KB:-0} / 1024 / 1024 ))
+[ "$AVAIL_GB" -lt 4 ] && { bad "磁盘可用 ${AVAIL_GB}G，建议留 5G 以上"; exit 1; }
 ok "磁盘可用 ${AVAIL_GB}G"
 
 # ---------- 2. 取代码 ----------
@@ -73,6 +81,19 @@ fi
 # shellcheck disable=SC1091
 set -a; . ./.env; set +a
 WEB_PORT="${WEB_PORT:-18080}"
+
+# ---------- 3.5 同名容器预检 ----------
+say "检查容器名冲突"
+CONFLICT=$(docker ps -a --format '{{.Names}}' | grep -E '^minimall-(mysql|redis|server|nginx)$' | tr '\n' ' ' || true)
+if [ -n "$CONFLICT" ]; then
+  bad "本机已存在同名容器：${CONFLICT}"
+  echo "     docker-compose.yml 里写死了 container_name，同一台机器只能跑一份。三种处理："
+  echo "     1) 换一台机器部署（推荐，演示站不该和开发环境挤在一起）"
+  echo "     2) 先停掉现有那一份：cd <旧目录> && docker compose down"
+  echo "     3) 想换端口共存：把 docker-compose.yml 的 container_name 全部删掉再起"
+  exit 1
+fi
+ok "无同名容器"
 
 # ---------- 4. 启动 ----------
 if [ "$RESET" = "1" ]; then
