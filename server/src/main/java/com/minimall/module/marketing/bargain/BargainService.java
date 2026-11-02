@@ -190,7 +190,9 @@ public class BargainService {
         og.setNum(1);
         og.setTotalPrice(ini.getCurrentPrice());
         orderGoodsMapper.insert(og);
-        goodsService.deductStock(item.getId(), 1);
+        if (!goodsService.deductStock(item.getId(), 1)) {
+            throw new BusinessException(ResultCode.STOCK_NOT_ENOUGH);
+        }
         goodsService.addSales(act.getGoodsId(), 1);
         initiateMapper.update(null, Wrappers.<BargainInitiate>lambdaUpdate()
                 .eq(BargainInitiate::getId, initiateId).set(BargainInitiate::getOrderId, order.getId()));

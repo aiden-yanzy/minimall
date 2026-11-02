@@ -97,7 +97,9 @@ public class TeamService {
         og.setTotalPrice(amount);
         orderGoodsMapper.insert(og);
 
-        goodsService.deductStock(item.getId(), num);
+        if (!goodsService.deductStock(item.getId(), num)) {
+            throw new BusinessException(ResultCode.STOCK_NOT_ENOUGH);
+        }
         goodsService.addSales(act.getGoodsId(), num);
         return order.getId();
     }

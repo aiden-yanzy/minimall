@@ -119,12 +119,22 @@ public class GoodsService extends ServiceImpl<GoodsMapper, Goods> {
         return goodsItemMapper.selectById(itemId);
     }
 
-    /** 扣 SKU 库存、加销量 */
-    public void deductStock(Long itemId, int num) {
-        goodsItemMapper.update(null, new LambdaUpdateWrapper<GoodsItem>()
+    /**
+     * 扣 SKU 库存、加销量（原子 + 防超卖）。
+     *
+     * <p>SQL 带 {@code stock >= num} 条件：并发下只有一个请求能扣成功，
+     * 失败返回 false，由调用方抛「库存不足」。
+     * 之前是裸的 {@code stock = stock - n}，两个人同时下单能把库存扣成负数。
+     *
+     * @return 是否扣减成功
+     */
+    public boolean deductStock(Long itemId, int num) {
+        int rows = goodsItemMapper.update(null, new LambdaUpdateWrapper<GoodsItem>()
                 .eq(GoodsItem::getId, itemId)
+                .ge(GoodsItem::getStock, num)
                 .setSql("stock = stock - " + num)
                 .setSql("sales = sales + " + num));
+        return rows > 0;
     }
 
     /** 恢复 SKU 库存 */
@@ -132,14 +142,20 @@ public class GoodsService extends ServiceImpl<GoodsMapper, Goods> {
         goodsItemMapper.update(null, new LambdaUpdateWrapper<GoodsItem>()
                 .eq(GoodsItem::getId, itemId)
                 .setSql("stock = stock + " + num)
-                .setSql("sales = sales - " + num));
+                .setSql("sales = GREATEST(sales - " + num + ", 0)"));
     }
 
-    /** 加 SPU 销量 */
+    /**
+     * 加 SPU 销量（顺带把冗余的 SPU 库存减到 0 为止）。
+     *
+     * <p>注意：**不阻断交易**。SKU 库存才是权威，SPU stock 只是冗余展示值，
+     * 一旦它和 SKU 合计漂移（后台改库存、补数据），拿它当校验条件会让用户
+     * 「明明有货却下不了单」——这个坑已经踩过。
+     */
     public void addSales(Long goodsId, int num) {
-        this.update(new LambdaUpdateWrapper<Goods>()
+        this.getBaseMapper().update(null, new LambdaUpdateWrapper<Goods>()
                 .eq(Goods::getId, goodsId)
-                .setSql("stock = stock - " + num)
+                .setSql("stock = GREATEST(stock - " + num + ", 0)")
                 .setSql("sales = sales + " + num));
     }
 
@@ -148,7 +164,7 @@ public class GoodsService extends ServiceImpl<GoodsMapper, Goods> {
         this.update(new LambdaUpdateWrapper<Goods>()
                 .eq(Goods::getId, goodsId)
                 .setSql("stock = stock + " + num)
-                .setSql("sales = sales - " + num));
+                .setSql("sales = GREATEST(sales - " + num + ", 0)"));
     }
 
     /** 后台商品分页 */

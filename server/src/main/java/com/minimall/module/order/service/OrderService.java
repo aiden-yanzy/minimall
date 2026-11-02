@@ -160,7 +160,10 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
             orderGoodsMapper.insert(og);
 
             if (seckillGoods == null) {
-                goodsService.deductStock(l.item.getId(), l.num);
+                // 原子扣减：并发下抢不到就直接失败（前面的预检是 check-then-act，挡不住并发）
+                if (!goodsService.deductStock(l.item.getId(), l.num)) {
+                    throw new BusinessException(ResultCode.STOCK_NOT_ENOUGH);
+                }
                 goodsService.addSales(l.goods.getId(), l.num);
             }
         }
@@ -346,9 +349,43 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         if (order.getOrderStatus() != 0) {
             throw new BusinessException(ResultCode.ORDER_STATUS_ERROR);
         }
-        // 未支付才允许取消；恢复库存（秒杀单回补秒杀库存）
+        doCancel(order, reason);
+    }
+
+    /**
+     * 系统自动取消（超时未支付）：无 userId 校验，但用 CAS 抢占状态，
+     * 避免和「用户刚支付」并发时把已支付订单误取消。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public boolean autoCancel(Long orderId, String reason) {
+        Order order = this.getById(orderId);
+        if (order == null || order.getOrderStatus() != 0) return false;
+        boolean ok = this.lambdaUpdate()
+                .eq(Order::getId, orderId)
+                .eq(Order::getOrderStatus, 0)
+                .set(Order::getOrderStatus, 4)
+                .set(Order::getPayStatus, 0)
+                .set(Order::getCancelTime, LocalDateTime.now())
+                .set(Order::getCancelReason, reason)
+                .update();
+        if (!ok) return false;
+        restoreForCancel(order);
+        return true;
+    }
+
+    /** 取消收尾：恢复库存（秒杀单回补秒杀库存）+ 退回优惠券 */
+    private void doCancel(Order order, String reason) {
+        this.lambdaUpdate().eq(Order::getId, order.getId())
+                .set(Order::getOrderStatus, 4)
+                .set(Order::getCancelTime, LocalDateTime.now())
+                .set(Order::getCancelReason, reason)
+                .update();
+        restoreForCancel(order);
+    }
+
+    private void restoreForCancel(Order order) {
         List<OrderGoods> ogs = orderGoodsMapper.selectList(
-                Wrappers.<OrderGoods>lambdaQuery().eq(OrderGoods::getOrderId, id));
+                Wrappers.<OrderGoods>lambdaQuery().eq(OrderGoods::getOrderId, order.getId()));
         boolean seckill = order.getOrderType() != null && order.getOrderType() == 2;
         for (OrderGoods og : ogs) {
             if (seckill) {
@@ -358,11 +395,11 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
                 goodsService.minusSales(og.getGoodsId(), og.getNum());
             }
         }
-        this.lambdaUpdate().eq(Order::getId, id)
-                .set(Order::getOrderStatus, 4)
-                .set(Order::getCancelTime, LocalDateTime.now())
-                .set(Order::getCancelReason, reason)
-                .update();
+        // 券退回（否则订单取消了券还占着）
+        try {
+            couponService.releaseByOrder(order.getId());
+        } catch (Exception ignore) {
+        }
     }
 
     /** 由支付模块调用：标记已支付 */

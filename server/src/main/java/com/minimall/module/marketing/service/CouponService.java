@@ -141,6 +141,17 @@ public class CouponService extends ServiceImpl<CouponMapper, Coupon> {
         return discount;
     }
 
+    /** 取消订单/超时关单：把券退回用户（按 useOrderId 反查） */
+    public void releaseByOrder(Long orderId) {
+        if (orderId == null) return;
+        couponListMapper.update(null, Wrappers.<CouponList>lambdaUpdate()
+                .eq(CouponList::getUseOrderId, orderId)
+                .eq(CouponList::getStatus, 1)
+                .set(CouponList::getStatus, 0)
+                .set(CouponList::getUseTime, null)
+                .set(CouponList::getUseOrderId, null));
+    }
+
     /** 计算优惠金额：满减券=value；折扣券=payable*(1-价值/1000) */
     public static long calcDiscount(int type, long value, long payable) {
         if (type == 2) {
