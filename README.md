@@ -64,10 +64,20 @@
 ### 一键起（推荐）
 
 ```bash
-git clone <your-repo-url> minimall && cd minimall
+git clone https://github.com/aiden-yanzy/minimall.git minimall && cd minimall
 cp .env.example .env      # 可选：改端口/口令（都有安全默认值，不改也能跑）
 docker compose up -d      # mysql + redis + server + nginx，首次启动自动建表并灌种子数据
 ```
+
+### 部署到云服务器（演示站）
+
+```bash
+# 在一台装了 Docker 的 Linux 服务器上（2G 内存起）
+bash scripts/deploy-demo.sh            # 自动拉代码、生成 .env、起容器、等就绪、打印访问地址
+bash scripts/deploy-demo.sh --port 8080 --reset
+```
+
+详见 [部署与运维](docs/03-部署运维.md)。
 
 | 入口 | 地址 | 账号 |
 |---|---|---|
