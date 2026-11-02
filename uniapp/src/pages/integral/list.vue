@@ -6,7 +6,7 @@
       <view class="orders-link" @click="goOrders">我的兑换订单 →</view>
     </view>
     <view v-for="g in list" :key="g.id" class="goods-card">
-      <image class="img" :src="g.image" mode="aspectFill" />
+      <image class="img" :src="asset(g.image)" mode="aspectFill" />
       <view class="info">
         <view class="name">{{ g.name }}</view>
         <view class="desc">{{ g.description || '' }}</view>
@@ -22,6 +22,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getIntegralGoods } from '@/api/integral'

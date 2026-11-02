@@ -6,7 +6,7 @@
         <text class="team">N人拼团 ￥{{ fen2yuan(a.teamPrice) }}</text>
       </view>
       <view class="goods">
-        <image class="img" :src="a.goodsImage" mode="aspectFill" />
+        <image class="img" :src="asset(a.goodsImage)" mode="aspectFill" />
         <view class="info">
           <view class="name">{{ a.goodsName }}</view>
           <view class="spec">{{ a.specValueStr }}</view>
@@ -35,6 +35,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getTeamList, teamBuy, teamJoin } from '@/api/p5'

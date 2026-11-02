@@ -2,7 +2,7 @@
   <view class="exchange">
     <view class="section">
       <view class="goods">
-        <image class="img" :src="goods.image" mode="aspectFill" />
+        <image class="img" :src="asset(goods.image)" mode="aspectFill" />
         <view class="info">
           <view class="name">{{ goods.name }}</view>
           <view class="price"><text class="num">{{ goods.integral }}</text> 积分</view>
@@ -35,6 +35,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getIntegralGoods, exchange } from '@/api/integral'

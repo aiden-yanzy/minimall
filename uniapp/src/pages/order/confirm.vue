@@ -19,7 +19,7 @@
 
     <view class="section">
       <view v-for="g in goodsList" :key="g.key" class="g-item">
-        <image class="img" :src="g.image" mode="aspectFill" />
+        <image class="img" :src="asset(g.image)" mode="aspectFill" />
         <view class="g-info">
           <view class="g-name">{{ g.name }}</view>
           <view class="g-spec">{{ g.spec }}</view>
@@ -86,6 +86,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { getCartList } from '@/api/cart'

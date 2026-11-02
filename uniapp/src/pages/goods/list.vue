@@ -21,7 +21,7 @@
           <button size="mini" @click="search">搜索</button>
         </view>
         <view v-for="g in list" :key="g.id" class="goods-row" @click="goDetail(g.id)">
-          <image class="img" :src="g.image" mode="aspectFill" />
+          <image class="img" :src="asset(g.image)" mode="aspectFill" />
           <view class="info">
             <view class="name">{{ g.name }}</view>
             <view class="price">￥{{ fen2yuan(g.minPrice) }} <text class="origin" v-if="g.marketPrice > g.minPrice">￥{{ fen2yuan(g.marketPrice) }}</text></view>
@@ -34,6 +34,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { ref } from 'vue'
 import { onLoad, onPullDownRefresh } from '@dcloudio/uni-app'
 import { getCategoryTree, getGoodsList } from '@/api/goods'

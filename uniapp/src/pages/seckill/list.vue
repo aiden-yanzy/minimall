@@ -6,7 +6,7 @@
         <text class="tag" :class="{ off: !a.started }">{{ a.started ? '进行中' : '即将开始' }}</text>
       </view>
       <view v-for="g in a.goodsList" :key="g.id" class="goods">
-        <image class="img" :src="g.goodsImage" mode="aspectFill" />
+        <image class="img" :src="asset(g.goodsImage)" mode="aspectFill" />
         <view class="info">
           <view class="name">{{ g.goodsName }}</view>
           <view class="spec">{{ g.specValueStr }}</view>
@@ -26,6 +26,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getSeckillList } from '@/api/seckill'

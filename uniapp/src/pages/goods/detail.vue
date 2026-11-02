@@ -2,7 +2,7 @@
   <view class="detail">
     <swiper class="swiper" circular indicator-dots autoplay>
       <swiper-item v-for="(img, i) in images" :key="i">
-        <image class="swiper-img" :src="img" mode="aspectFill" />
+        <image class="swiper-img" :src="asset(img)" mode="aspectFill" />
       </swiper-item>
     </swiper>
 
@@ -77,6 +77,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getGoodsDetail } from '@/api/goods'

@@ -1,7 +1,7 @@
 <template>
   <view class="apply">
     <view v-if="goods" class="goods-card">
-      <image class="img" :src="goods.goodsImage" mode="aspectFill" />
+      <image class="img" :src="asset(goods.goodsImage)" mode="aspectFill" />
       <view class="info">
         <view class="name">{{ goods.goodsName }}</view>
         <view class="spec">{{ goods.specValueStr }}</view>
@@ -49,6 +49,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { createAfterSale } from '@/api/after'

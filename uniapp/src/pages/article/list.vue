@@ -1,7 +1,7 @@
 <template>
   <view class="articles">
     <view v-for="a in list" :key="a.id" class="card" @click="open(a)">
-      <image v-if="a.image" class="img" :src="a.image" mode="aspectFill" />
+      <image v-if="a.image" class="img" :src="asset(a.image)" mode="aspectFill" />
       <view class="info">
         <view class="title">{{ a.title }}</view>
         <view class="time">{{ (a.createTime || '').slice(0, 10) }}</view>
@@ -12,6 +12,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getArticleList } from '@/api/content'

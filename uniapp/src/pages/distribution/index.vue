@@ -101,6 +101,7 @@ import { onShow } from '@dcloudio/uni-app'
 import { distOverview, distInvite, distCommissions, distTeam } from '@/api/distribution'
 import { useUserStore } from '@/store/user'
 import { fen2yuan } from '@/utils/format'
+import config from '@/api/config'
 
 const userStore = useUserStore()
 const info = ref({})
@@ -132,11 +133,20 @@ function copy(text, tip) {
 function copyLink() {
   const code = invite.value.inviteCode
   if (!code) return
-  // 当前域名 + 页面路径（H5 hash 路由）
-  const origin = location.origin
+  // H5 用当前域名 + hash 路由；小程序没有 location，用配置的站点地址
+  const origin = config.baseUrl || (typeof location !== 'undefined' ? location.origin : '')
   const link = `${origin}/#/pages/user/login?ref=${code}`
   copy(link, '推广链接已复制')
 }
+
+// 小程序分享：带邀请码，好友点开即绑定
+// #ifdef MP-WEIXIN
+import { onShareAppMessage } from '@dcloudio/uni-app'
+onShareAppMessage(() => ({
+  title: '我在 Minimall 发现了好东西，一起来逛',
+  path: '/pages/index/index?ref=' + (invite.value.inviteCode || '')
+}))
+// #endif
 
 onShow(load)
 </script>

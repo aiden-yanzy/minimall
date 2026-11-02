@@ -7,7 +7,7 @@
         <text class="status">{{ statusMap[o.status] }}</text>
       </view>
       <view class="body">
-        <image class="img" :src="o.goodsImage" mode="aspectFill" />
+        <image class="img" :src="asset(o.goodsImage)" mode="aspectFill" />
         <view class="info">
           <view class="name">{{ o.goodsName }}</view>
           <view class="meta">x{{ o.num }} · 共 {{ o.totalIntegral }} 积分</view>
@@ -19,6 +19,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getIntegralOrders } from '@/api/integral'

@@ -13,7 +13,7 @@
           <view class="btn small" @click="start(a)">发起砍价</view>
         </view>
         <view class="goods">
-          <image class="img" :src="a.goodsImage" mode="aspectFill" />
+          <image class="img" :src="asset(a.goodsImage)" mode="aspectFill" />
           <view class="info">
             <view class="name">{{ a.goodsName }}</view>
             <view class="spec">{{ a.specValueStr }}</view>
@@ -31,7 +31,7 @@
     <view v-if="tab === 'mine'">
       <view v-for="i in mine" :key="i.id" class="act mine">
         <view class="goods">
-          <image class="img" :src="i.goodsImage" mode="aspectFill" />
+          <image class="img" :src="asset(i.goodsImage)" mode="aspectFill" />
           <view class="info">
             <view class="name">{{ i.activityName }}</view>
             <view class="prices">
@@ -62,6 +62,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getBargainList, bargainStart, bargainHelp, bargainMine, bargainOrder } from '@/api/p5'

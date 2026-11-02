@@ -13,7 +13,7 @@
         <text class="status">{{ statusMap[o.orderStatus] }}</text>
       </view>
       <view v-for="g in o.goodsList" :key="g.goodsItemId" class="g-item">
-        <image class="img" :src="g.goodsImage" mode="aspectFill" />
+        <image class="img" :src="asset(g.goodsImage)" mode="aspectFill" />
         <view class="g-info">
           <view class="g-name">{{ g.goodsName }}</view>
           <view class="g-spec">{{ g.specValueStr }}</view>
@@ -32,6 +32,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getOrderList } from '@/api/order'

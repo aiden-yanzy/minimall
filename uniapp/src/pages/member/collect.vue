@@ -1,7 +1,7 @@
 <template>
   <view class="wrap">
     <view v-for="g in list" :key="g.id" class="card" @click="goDetail(g.id)">
-      <image class="img" :src="g.image" mode="aspectFill" />
+      <image class="img" :src="asset(g.image)" mode="aspectFill" />
       <view class="info">
         <view class="name">{{ g.name }}</view>
         <view class="price">￥{{ fen2yuan(g.minPrice) }}</view>
@@ -13,6 +13,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getCollectList, toggleCollect } from '@/api/member'

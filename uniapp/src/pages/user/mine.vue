@@ -1,7 +1,7 @@
 <template>
   <view class="mine">
     <view class="profile">
-      <image class="avatar" :src="userInfo?.avatar || defaultAvatar" mode="aspectFill" />
+      <image class="avatar" :src="asset(userInfo?.avatar || defaultAvatar)" mode="aspectFill" />
       <view class="u-info">
         <view v-if="userInfo" class="nickname">{{ userInfo.nickname }}</view>
         <view v-else class="nickname" @click="goLogin">点击登录</view>
@@ -50,6 +50,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/user'

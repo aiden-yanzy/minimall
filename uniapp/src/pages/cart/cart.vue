@@ -9,7 +9,7 @@
       <view class="check" :class="{ on: it.isSelected === 1 }" @click="toggle(it)">
         <text v-if="it.isSelected === 1">✓</text>
       </view>
-      <image class="img" :src="it.goodsImage" mode="aspectFill" @click="goDetail(it.goodsId)" />
+      <image class="img" :src="asset(it.goodsImage)" mode="aspectFill" @click="goDetail(it.goodsId)" />
       <view class="info">
         <view class="name" @click="goDetail(it.goodsId)">{{ it.goodsName }}</view>
         <view class="spec">{{ it.specValueStr }}</view>
@@ -38,6 +38,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getCartList, updateCartNum, updateSelected, removeCart } from '@/api/cart'

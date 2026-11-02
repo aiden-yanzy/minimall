@@ -12,7 +12,7 @@
       </view>
 
       <view class="body">
-        <image class="img" :src="a.goodsImage" mode="aspectFill" />
+        <image class="img" :src="asset(a.goodsImage)" mode="aspectFill" />
         <view class="info">
           <view class="name">{{ a.goodsName || '商品' }}</view>
           <view class="spec">{{ a.specValueStr }}</view>
@@ -37,6 +37,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { myAfterSales, cancelAfterSale } from '@/api/after'

@@ -2,7 +2,7 @@
   <view class="wrap">
     <view v-for="a in acts" :key="a.id" class="act">
       <view class="goods">
-        <image class="img" :src="a.goodsImage" mode="aspectFill" />
+        <image class="img" :src="asset(a.goodsImage)" mode="aspectFill" />
         <view class="info">
           <view class="name">{{ a.name }}</view>
           <view class="desc">付定金 ￥{{ fen2yuan(a.deposit) }}，尾款 ￥{{ fen2yuan(a.finalPrice) }}</view>
@@ -34,6 +34,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getPresellList, presellOrder, presellPayDeposit, presellPayFinal, presellMine } from '@/api/p5'

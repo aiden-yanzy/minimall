@@ -11,7 +11,7 @@
 
     <view class="section">
       <view v-for="g in order.goodsList" :key="g.goodsItemId" class="g-item">
-        <image class="img" :src="g.goodsImage" mode="aspectFill" />
+        <image class="img" :src="asset(g.goodsImage)" mode="aspectFill" />
         <view class="g-info">
           <view class="g-name">{{ g.goodsName }}</view>
           <view class="g-spec">{{ g.specValueStr }}</view>
@@ -73,6 +73,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getOrderDetail, cancelOrder, mockPay } from '@/api/order'

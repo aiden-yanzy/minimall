@@ -3,7 +3,7 @@
     <!-- 轮播(装修配置) -->
     <swiper v-if="decorate.banners?.length && decorate.banners[0].image" class="banner-swiper" circular indicator-dots autoplay>
       <swiper-item v-for="(b, i) in decorate.banners" :key="i">
-        <image class="banner-img" :src="b.image" mode="aspectFill" />
+        <image class="banner-img" :src="asset(b.image)" mode="aspectFill" />
       </swiper-item>
     </swiper>
     <view v-else class="banner">
@@ -14,7 +14,7 @@
     <!-- 宫格导航(装修配置) -->
     <view class="nav-grid" v-if="decorate.navs?.length">
       <view v-for="(n, i) in decorate.navs" :key="i" class="nav-cell" @click="go(n.link)">
-        <image class="nav-icon" :src="navIcon(n.name)" mode="aspectFit" />
+        <image class="nav-icon" :src="asset(navIcon(n.name))" mode="aspectFit" />
         <view class="nav-name">{{ n.name }}</view>
       </view>
     </view>
@@ -26,7 +26,7 @@
     <view class="section-title">{{ decorate.goodsTitle || '推荐好物' }}</view>
     <view class="goods-grid">
       <view v-for="g in list" :key="g.id" class="goods-card" @click="goDetail(g.id)">
-        <image class="goods-img" :src="g.image || defaultImg" mode="aspectFill" />
+        <image class="goods-img" :src="asset(g.image || defaultImg)" mode="aspectFill" />
         <view class="goods-name">{{ g.name }}</view>
         <view class="goods-price">
           <text class="price-symbol">￥</text>
@@ -40,6 +40,7 @@
 </template>
 
 <script setup>
+import { asset } from '@/utils/asset'
 import { reactive, ref } from 'vue'
 import { onLoad, onPullDownRefresh } from '@dcloudio/uni-app'
 import { getGoodsList } from '@/api/goods'
@@ -86,6 +87,11 @@ onLoad(load)
 onPullDownRefresh(async () => {
   await load()
   uni.stopPullDownRefresh()
+})
+
+// 小程序/分享链接带 ?ref=邀请码 → 存起来，注册时自动带上
+onLoad((q) => {
+  if (q && q.ref) uni.setStorageSync('ref_code', q.ref)
 })
 </script>
 
