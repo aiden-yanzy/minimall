@@ -106,6 +106,36 @@ const router = createRouter({
           meta: { title: '营销管理' }
         },
         {
+          path: 'marketing/team',
+          name: 'marketing-team',
+          component: () => import('@/views/marketing/team.vue'),
+          meta: { title: '拼团管理' }
+        },
+        {
+          path: 'marketing/bargain',
+          name: 'marketing-bargain',
+          component: () => import('@/views/marketing/bargain.vue'),
+          meta: { title: '砍价管理' }
+        },
+        {
+          path: 'marketing/presell',
+          name: 'marketing-presell',
+          component: () => import('@/views/marketing/presell.vue'),
+          meta: { title: '预售管理' }
+        },
+        {
+          path: 'marketing/sign',
+          name: 'marketing-sign',
+          component: () => import('@/views/marketing/sign.vue'),
+          meta: { title: '签到配置' }
+        },
+        {
+          path: 'marketing/distribution',
+          name: 'marketing-distribution',
+          component: () => import('@/views/marketing/distribution.vue'),
+          meta: { title: '分销管理' }
+        },
+        {
           path: 'integral',
           name: 'integral',
           component: () => import('@/views/integral/index.vue'),
