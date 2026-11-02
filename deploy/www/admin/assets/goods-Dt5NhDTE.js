@@ -1,0 +1,1 @@
+import{A as s}from"./index-Cky6h4hr.js";const d=o=>s.get("/admin/goods",{params:o}),e=o=>s.get(`/admin/goods/${o}`),g=o=>s.post("/admin/goods",o),i=(o,t)=>s.put(`/admin/goods/${o}`,t),n=(o,t)=>s.put(`/admin/goods/status/${o}`,null,{params:{status:t}}),p=o=>s.delete(`/admin/goods/${o}`),c=()=>s.get("/admin/goods/category/tree");export{e as a,i as b,c,g as d,n as e,p as f,d as g};

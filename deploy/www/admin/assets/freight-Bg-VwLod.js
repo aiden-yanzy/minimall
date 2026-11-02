@@ -1,1 +1,0 @@
-import{A as e}from"./index-BMYedhQ4.js";const i=()=>e.get("/admin/freight/template"),p=t=>e.post("/admin/freight/template",t),m=t=>e.delete(`/admin/freight/template/${t}`);export{p as a,m as b,i as f};
