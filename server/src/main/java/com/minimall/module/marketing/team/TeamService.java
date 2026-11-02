@@ -161,7 +161,8 @@ public class TeamService {
         return vo;
     }
 
-    private int joinCount(Long foundId) {
+    /** 团内已参团人数（团长算 1 人），后台列表也用 */
+    public int joinCount(Long foundId) {
         Long c = joinMapper.selectCount(Wrappers.<TeamJoin>lambdaQuery().eq(TeamJoin::getFoundId, foundId));
         return c == null ? 0 : c.intValue();
     }
