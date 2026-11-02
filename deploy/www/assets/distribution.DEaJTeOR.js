@@ -1,1 +1,0 @@
-import{g as i,p as o}from"./_plugin-vue_export-helper.piPdh7S4.js";const s=()=>i("/shop/distribution/overview"),t=()=>i("/shop/distribution/invite"),e=()=>i("/shop/distribution/commissions"),n=()=>i("/shop/distribution/team"),p=i=>o("/shop/distribution/bind-code?code="+encodeURIComponent(i));export{t as a,p as b,e as c,s as d,n as e};
