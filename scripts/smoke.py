@@ -83,10 +83,10 @@ class Api:
         return self.call("POST", p, body if body is not None else {}, **kw)
 
 
-def mysql(sql):
+def mysql(sql, container="minimall-mysql"):
     """执行 SQL（并发校验用）"""
     out = subprocess.run(
-        ["docker", "exec", "minimall-mysql", "mysql", "--default-character-set=utf8mb4",
+        ["docker", "exec", container, "mysql", "--default-character-set=utf8mb4",
          "-uminimall", "-pminimall123", "minimall", "-N", "-e", sql],
         capture_output=True, text=True, timeout=30)
     if out.returncode != 0:
@@ -112,6 +112,8 @@ def main():
     ap.add_argument("--admin-account", default="admin")
     ap.add_argument("--admin-password", default="admin123")
     ap.add_argument("--skip-concurrency", action="store_true")
+    ap.add_argument("--db-container", default="minimall-mysql",
+                    help="并发校验要改库存，指定 mysql 容器名（多实例同机时必填）")
     ap.add_argument("--concurrency", type=int, default=20)
     ap.add_argument("--stock", type=int, default=5)
     args = ap.parse_args()
@@ -218,13 +220,13 @@ def main():
         record("并发校验", True, "按参数跳过", skipped=True)
     else:
         try:
-            sku = mysql("select id from goods_item where delete_flag=0 and stock>10 order by id limit 1")
+            sku = mysql("select id from goods_item where delete_flag=0 and stock>10 order by id limit 1", args.db_container)
             if not sku:
                 record("并发校验", True, "库里没有可测 SKU", skipped=True)
             else:
                 sku = sku.splitlines()[0]
-                origin_stock = mysql(f"select stock from goods_item where id={sku}")
-                mysql(f"update goods_item set stock={args.stock} where id={sku}")
+                origin_stock = mysql(f"select stock from goods_item where id={sku}", args.db_container)
+                mysql(f"update goods_item set stock={args.stock} where id={sku}", args.db_container)
                 n = args.concurrency
 
                 def place(_):
@@ -235,12 +237,12 @@ def main():
                 with ThreadPoolExecutor(max_workers=n) as pool:
                     codes = list(pool.map(place, range(n)))
                 ok_n = sum(1 for c in codes if c == 200)
-                left = int(mysql(f"select stock from goods_item where id={sku}"))
+                left = int(mysql(f"select stock from goods_item where id={sku}", args.db_container))
                 record("成功数 == 初始库存", ok_n == args.stock, f"成功 {ok_n} 单 / 库存 {args.stock}")
                 record("无负库存", left >= 0, f"剩余 {left}")
                 record("库存被正确扣净", left == 0, f"剩余 {left}")
                 # 还原库存（把测试单取消，或直接恢复）
-                mysql(f"update goods_item set stock={origin_stock} where id={sku}")
+                mysql(f"update goods_item set stock={origin_stock} where id={sku}", args.db_container)
                 record("库存已还原", True, f"恢复到 {origin_stock}")
         except Exception as e:
             record("并发校验", True, f"跳过：{e}", skipped=True)

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#7b2ff7"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs>
+<rect width="1200" height="400" fill="url(#g)"/>
+<text x="600.0" y="190.0" font-size="44.44444444444444" text-anchor="middle" fill="#cc5500" font-family="PingFang SC, sans-serif">秒杀专场 每日10点开抢</text>
+<text x="600.0" y="233.33333333333334" font-size="18.181818181818183" text-anchor="middle" fill="#aa9990">限量开抢</text></svg>

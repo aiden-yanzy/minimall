@@ -72,6 +72,8 @@ services:
       - "${SERVER_BIND:-0.0.0.0}:${SERVER_PORT:-18082}:8080"
     volumes:
       - upload-data:/app/upload
+      # 演示图片：随仓库提供，开箱即可看到完整商品图（只读，不影响用户上传）
+      - ./deploy/demo-upload:/app/upload/demo:ro
 
   # nginx：前端网关（H5 / admin / 后端反代）——前端构建后启用
   # 前端产物目录约定：
@@ -89,6 +91,8 @@ services:
       - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./deploy/www:/usr/share/nginx/html:ro
       - upload-data:/usr/share/nginx/upload
+      # 演示图片（与 server 共享同一份只读挂载，保证 /file/demo/* 可访问）
+      - ./deploy/demo-upload:/usr/share/nginx/upload/demo:ro
 
 volumes:
   mysql-data:
