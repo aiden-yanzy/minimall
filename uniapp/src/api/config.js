@@ -8,7 +8,7 @@
 // 改这一处就能切环境，业务代码不用动
 let baseUrl = ''
 // #ifdef MP-WEIXIN
-baseUrl = 'http://localhost:18082'
+baseUrl = 'http://localhost:18082'   // ← 换成你的后端地址（小程序要求 https + 已备案域名）
 // #endif
 
 export default {

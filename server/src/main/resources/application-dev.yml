@@ -14,9 +14,10 @@ spring:
 
 # Sa-Token 与 Redis 共用
 sa-token:
-  jwt-secret-key: changeme-minimall-secret-for-p0
+  # 生产必须换成自己的随机串（>=32 位），否则 JWT 可被伪造
+  jwt-secret-key: ${SA_JWT_SECRET:changeme-minimall-secret-for-p0}
 
 # 文件上传本地目录
 minimall:
   upload-dir: ./upload
-  file-domain: http://localhost:8080/file
+  file-domain: ${FILE_DOMAIN:http://localhost:8080/file}

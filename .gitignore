@@ -23,6 +23,9 @@ logs/
 # ---- 环境/密钥（不入库）----
 *.pem
 *.key
+.env
+.env.*
+!.env.example
 .env.local
 application-local.yml
 
