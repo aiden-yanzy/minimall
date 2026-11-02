@@ -1,121 +1,173 @@
-# Minimall 单商户自营商城
+# Minimall · 单商户自营商城
 
-基于 likeshop（PHP）业务设计、用 **Java + Vue3** 自研的单商户商城系统（仅借鉴需求与页面风格，不复制其代码）。
+一套**从零自研**的 Java 电商系统：后台管理 + PC 商城 + H5 商城 + 微信小程序，四端共用一套后端与一套 C 端代码。
+
+业务覆盖面参考主流 B2C 商城的功能地图实现，**代码全部自研**（不复制第三方源码与素材），适合作为 Java 全栈学习项目、二开脚手架或方案演示。
+
+<p align="left">
+  <img alt="Java" src="https://img.shields.io/badge/Java-17-orange?logo=openjdk&logoColor=white">
+  <img alt="Spring Boot" src="https://img.shields.io/badge/Spring%20Boot-3.3-brightgreen?logo=springboot&logoColor=white">
+  <img alt="MySQL" src="https://img.shields.io/badge/MySQL-8-blue?logo=mysql&logoColor=white">
+  <img alt="Redis" src="https://img.shields.io/badge/Redis-7-red?logo=redis&logoColor=white">
+  <img alt="Vue" src="https://img.shields.io/badge/Vue-3-42b883?logo=vuedotjs&logoColor=white">
+  <img alt="uni-app" src="https://img.shields.io/badge/uni--app-H5%20%2B%20WeChat-2b9939">
+  <img alt="Docker" src="https://img.shields.io/badge/Docker-Compose-2496ed?logo=docker&logoColor=white">
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-yellow.svg">
+</p>
+
+## 截图
+
+| H5 商城 · 分销中心 | PC 商城 |
+|---|---|
+| ![H5](docs/images/shot-h5-distribution.png) | ![PC](docs/images/shot-pc-home.png) |
+
+| 后台 · 销售统计 | 后台 · 商品与多规格 SKU |
+|---|---|
+| ![统计](docs/images/shot-admin-stat.png) | ![商品](docs/images/shot-admin-goods.png) |
+
+| 后台 · 会员标签 | H5 · 申请售后 |
+|---|---|
+| ![会员](docs/images/shot-admin-users.png) | ![售后](docs/images/shot-h5-after.png) |
+
+## 它能做什么
+
+**交易主链路**：浏览 → 搜索 → 商品详情（多规格 SKU）→ 购物车 → 下单（会员价 / 满减 / 优惠券分层计算）→ 支付 → 发货 → 物流轨迹 → 收货 → 评价 → 售后（退款到余额并恢复库存）
+
+**营销**：优惠券 / 满减 / 限时秒杀（Redis 原子库存）/ 拼团 / 砍价 / 预售（定金 + 尾款）/ 积分商城 / 每日签到 / 幸运抽奖 / 满额免邮 / 注册送
+
+**会员与分销**：会员等级（成长值 = 累计实付，支付后自动升级）/ 会员标签分组 / 余额钱包（充值 / 提现审核 / 流水）/ 一级分销（邀请码、我的团队、按卖家等级结算佣金）
+
+**后台**：工作台 / 商品（多规格）/ 订单（批量发货·改价·轨迹）/ 售后审核 / 销售统计 / 用户与标签 / 会员等级 / 品牌单位 / 运费模板 / 评价管理 / 营销配置（券·满减·拼团·砍价·预售·签到）/ 积分商城 / 秒杀 / 提现审核 / 财务明细 / 首页可视化装修 / 角色权限（菜单 + 按钮级 RBAC）/ 设置中心
 
 ## 技术栈
-- 后端：Java 17 · Spring Boot 3.3 · MyBatis-Plus · MySQL 8 · Redis 7 · Sa-Token(双体系) · springdoc
-- C 端：Vue3 + uni-app（一套代码编译 **H5 + 微信小程序**）
-- PC 端：Vue3 + Vite + Element Plus（宽屏商城）
-- 后台：Vue3 + Vite + Element Plus + Pinia + Vue Router
-- 部署：Docker Compose 一键启动（mysql + redis + server + nginx）
+
+| 层 | 选型 |
+|---|---|
+| 后端 | Java 17 · Spring Boot 3.3 · MyBatis-Plus · Sa-Token（双体系：admin / user）· springdoc-openapi |
+| 存储 | MySQL 8 · Redis 7（秒杀库存、会话、缓存） |
+| C 端 | Vue 3 + uni-app（**一套代码编译 H5 与微信小程序**）|
+| PC 端 | Vue 3 + Vite + Element Plus |
+| 后台 | Vue 3 + Vite + Element Plus + Pinia |
+| 部署 | Docker Compose（mysql + redis + server + nginx）|
 
 ## 规模
 
 | 项 | 数量 |
 |---|---|
-| 接口 | **201**（C 端 85 / 后台 83 / 其余健康与文档） |
+| 接口 | **201**（C 端 85 / 后台 83 / 文档等） |
 | 数据库表 | 65 |
-| 后端 | 239 个 Java 文件 / 约 10.7k 行 |
-| H5 页面 | 31 |
-| PC 页面 | 15 |
-| 后台页面 | 20（菜单 24 项，含按钮级权限点） |
+| 后端 | 239 个 Java 文件 · 约 10.7k 行 |
+| 页面 | H5 **31** · PC **15** · 后台 **20**（菜单 24 项含按钮级权限点）|
 
-## 目录结构
-```
-minimall/
-├── server/          # Spring Boot 后端（按业务域分包）
-│   └── src/main/resources/sql/minimall-init.sql   # 全量建表+种子数据
-├── uniapp/          # C 端（Vue3 + uni-app，H5 + 小程序）
-├── pc/              # PC 商城端
-├── admin/           # 后台管理
-├── deploy/          # nginx 配置 / www 产物
-├── scripts/         # 启动 / 演示数据 / 冒烟测试
-├── docker-compose.yml
-└── docs/            # 技术设计方案 · 小程序端说明
-```
+## 快速开始
 
-## 快速启动
+### 一键起（推荐）
 
 ```bash
-# 后端 + 中间件（mysql / redis / server）
-docker compose up -d
-
-# 前端三端产物
-cd admin  && npm i && npm run build && rsync -a --delete dist/ ../deploy/www/admin/
-cd pc     && npm i && npm run build && rsync -a --delete dist/ ../deploy/www/pc/
-cd uniapp && npm i && npm run build:h5
-rsync -a --delete --exclude 'pc' --exclude 'admin' --exclude 'landing.html' \
-      uniapp/dist/build/h5/ ../deploy/www/
+git clone <your-repo-url> minimall && cd minimall
+cp .env.example .env      # 可选：改端口/口令（都有安全默认值，不改也能跑）
+docker compose up -d      # mysql + redis + server + nginx，首次启动自动建表并灌种子数据
 ```
 
-访问（端口可改 `docker-compose.yml`）：
+| 入口 | 地址 | 账号 |
+|---|---|---|
+| H5 商城 | http://localhost:18080/ | 种子账号 `13800138000 / 123456`，也可自行注册 |
+| PC 商城 | http://localhost:18080/pc/ | 同上 |
+| 后台管理 | http://localhost:18080/admin-web/ | `admin / admin123`（超管）· `operator / admin123`（运营，看权限差异用）|
+| 接口文档 | http://localhost:18082/swagger-ui.html | — |
 
-| 入口 | 地址 |
-|---|---|
-| H5 商城 | http://localhost:18080/ |
-| PC 商城 | http://localhost:18080/pc/ |
-| 后台 | http://localhost:18080/admin-web/ （admin / admin123，另有 operator / admin123 演示权限差异）|
-| 接口文档 | http://localhost:18082/swagger-ui.html |
+> 三端构建产物已随仓库提供（`deploy/www/`），开箱即可看到完整界面。要改前端看下面「本地开发」。
 
-后端改动后的构建链路（容器内 Maven 拉依赖不稳，走本机打包 + 薄运行镜像）：
+### 本地开发
 
 ```bash
-cd server && JAVA_HOME=$(/usr/libexec/java_home -v 21 2>/dev/null || echo /opt/homebrew/opt/openjdk@21) \
-  mvn -q -DskipTests package
-cd .. && docker build -f server/Dockerfile.runtime -t minimall-server:latest ./server
+# 后端：容器内 Maven 拉依赖不稳，走本机打包 + 薄运行镜像
+cd server && mvn -q -DskipTests package && cd ..
+docker build -f server/Dockerfile.runtime -t minimall-server:latest ./server
 docker compose up -d --no-build server
+
+# 后台
+cd admin && npm i && npm run dev      # http://localhost:5173
+
+# PC 商城
+cd pc && npm i && npm run dev         # http://localhost:5175
+
+# C 端（H5 / 微信小程序）
+cd uniapp && npm i
+npm run dev:h5             # H5 开发
+npm run build:h5           # 构建 H5
+npm run build:mp-weixin    # 构建微信小程序，产物 dist/build/mp-weixin
 ```
 
-## 冒烟测试（一条命令验主流程）
+小程序导入、appid、域名白名单等细节见 [docs/小程序端说明.md](docs/小程序端说明.md)。
+
+## 冒烟测试
+
+一条命令验完主流程 + 并发安全，**25 项断言**：
 
 ```bash
-python3 scripts/smoke.py            # 打 http://127.0.0.1:18082
-python3 scripts/smoke.py --base http://localhost:18082
-python3 scripts/smoke.py --skip-concurrency   # 不需要 docker
+python3 scripts/smoke.py                      # 只用标准库，系统 python3 即可
+python3 scripts/smoke.py --skip-concurrency   # 无 docker 环境时跳过并发项
 ```
 
-覆盖 **25 项断言**：健康检查 → 注册登录 → 领券 → 加购下单 → 支付 → 后台发货 → 物流轨迹 → 收货 → 评价 → 成长值累加 → 申请售后 → 后台同意退款 → 退款进余额 → **并发 20 请求打 5 件库存（必须恰好 5 成功、无负库存）**。
+覆盖：健康检查 → 注册登录 → 领券 → 加购下单 → 支付 → 后台发货 → 物流轨迹 → 收货 → 评价 → 成长值累加 → 申请售后 → 后台同意退款 → 退款进余额 → **20 个并发打 5 件库存（必须恰好 5 单成功、库存归零且不为负）**。
+
 任一步失败立即非 0 退出，可直接接 CI。
 
-## 功能地图
+## 值得一看的设计点
 
-### C 端（H5 31 页 / PC 15 页）
-| 域 | 功能 |
+| 主题 | 做法 |
 |---|---|
-| 交易 | 首页(可视化装修) / 搜索(历史+热词) / 分类 / 商品详情(SKU) / 购物车 / 下单确认(券+会员价+满减明细分) / 订单列表 / 订单详情(支付/取消/收货/轨迹) |
-| 售后 | 申请售后(仅退款/退货退款/换货) / 我的售后(撤销/退款单号) |
-| 营销 | 领券中心 / 我的券 / 限时秒杀(Redis 库存) / 拼团 / 砍价 / 预售 / 积分商城 / 每日签到 / 幸运抽奖 |
-| 会员 | 会员中心(等级+成长值进度) / 余额明细 / 收藏 / 足迹 / 分销中心(邀请码/团队/佣金) |
-| 内容 | 文章中心 / 在线客服 |
+| **防超卖** | 库存扣减用 `UPDATE ... SET stock = stock - n WHERE id = ? AND stock >= n`，扣不动即失败回滚。下单前的「查库存再判断」只用于快速失败，不作为并发保护 |
+| **秒杀** | Redis 预扣库存 + DB 双写；key 缺失（新上架 / Redis 重启）按 DB 回源，扣成负数时校正重试，避免「明明有货永远抢不到」 |
+| **超时关单** | `@Scheduled` 每分钟扫未支付订单（普通 30min / 秒杀 5min），用 CAS `WHERE order_status = 0` 抢占状态，避免误杀刚支付的订单；关单同时恢复库存、回补秒杀库存、退回优惠券 |
+| **售后** | 同意退款 → 退到余额并写账户流水 → 恢复库存（秒杀单回补秒杀库存）→ 标记订单行已售后 |
+| **会员成长值** | 成长值 = 累计实付，支付成功即时累加并按门槛重算等级；等级折扣参与下单时的价格分层计算 |
+| **分销** | 邀请码加盐编码（避免 base36 短码可枚举）；注册带 `inviteCode` 自动绑定；收货后按**卖家本人累计佣金**匹配到的等级费率结算 |
+| **权限** | `/admin/auth/me` 下发权限码，前端菜单与按钮按权限渲染，后端 `@SaCheckPermission` 兜底；admin 与 user 是两套 Sa-Token 体系（混用会导致 401） |
+| **首页装修** | 轮播 / 宫格 / 商品区标题存 JSON，后台可视化编辑 + 手机实时预览，服务端做结构校验（避免坏 JSON 把 C 端首页搞挂） |
 
-### 后台（20 页）
-工作台 / 商品(多规格 SKU) / 订单(发货·改价·轨迹) / 售后审核 / 销售统计 / 用户(标签·等级) / 会员等级 / 品牌单位 / 运费模板 / 评价管理 / 营销(券+满减) / 拼团 / 砍价 / 预售 / 签到配置 / 积分商城 / 秒杀 / 提现审核 / 财务明细 / 内容装修 / 角色权限 / 设置中心
+## 目录结构
 
-### 后端要点
-- 促销管道：商品总额 → 会员等级折扣 → 满减 → 优惠券 → 应付
-- **库存原子扣减**（`stock >= num` 条件更新，扣不动即失败），并发不超卖
-- **未支付订单超时自动关单**（普通 30min / 秒杀 5min，CAS 抢占状态，恢复库存并退回优惠券）
-- 秒杀 Redis 预扣 + DB 双写，key 缺失/漂移自动回源校正
-- 售后同意即退款到余额并记流水，同时恢复库存（秒杀单回补秒杀库存）
-- 分销：邀请码加盐编码、注册自动绑定、按卖家累计佣金匹配等级费率、收货后结算
-- 会员成长值 = 累计实付，支付后自动累加并重算等级
-- RBAC：`/admin/auth/me` 返回权限码，前端菜单与按钮按权限过滤，后端 `@SaCheckPermission` 兜底
+```
+minimall/
+├── server/                  # Spring Boot 后端（按业务域分包）
+│   └── src/main/resources/sql/minimall-init.sql   # 全量建表 + 种子数据
+├── uniapp/                  # C 端：Vue3 + uni-app（H5 / 微信小程序）
+├── pc/                      # PC 商城端
+├── admin/                   # 后台管理端
+├── deploy/                  # nginx 配置 + 三端构建产物（www/）
+├── scripts/                 # 启动、演示数据、冒烟测试
+├── docs/                    # 技术方案 · 接口概览 · 部署运维 · 演示脚本 · 小程序说明
+├── docker-compose.yml
+└── .env.example             # 端口 / 口令 / JWT 密钥（复制成 .env 使用）
+```
 
-## 迭代记录
+## 文档
 
-| 阶段 | 内容 | 状态 |
-|---|---|---|
-| P0–P8 | 骨架 / 交易主链路 / 售后 / 营销 / 秒杀 / 拼团砍价预售 / 分销钱包 / 装修内容 / 报表 | ✅ |
-| P9 | 多规格 SKU · 首页可视化装修 · RBAC 菜单按钮级 | ✅ |
-| P10 | 会员标签与等级成长值 | ✅ |
-| P11 | 售后闭环（退款落余额）· 分销中心 · C 端搜索 | ✅ |
-| P12 | PC 端营销与会员页 · 微信小程序端可构建 | ✅ |
-| P13 | 防超卖 · 未支付超时关单 · 后台 5 个营销域补页面 · 冒烟测试 | ✅ |
+- [技术设计方案](docs/01-技术设计方案.md)
+- [接口概览](docs/02-接口概览.md)
+- [部署与运维](docs/03-部署运维.md)
+- [演示脚本（5 分钟走完）](docs/04-演示脚本.md)
+- [小程序端说明](docs/小程序端说明.md)
 
-## 上线前仍需补（都需要外部资质或资源）
+## 上线前还需要补
 
-- **真实支付**：微信/支付宝 SDK + 商户号 + 回调验签（当前 `/shop/pay/mock` 模拟直通）
-- **小程序登录**：`wx.login` → `code2Session` 换 openid（当前手机号+密码）
-- **短信**：注册/找回密码验证码
-- **对象存储**：OSS/COS 替换本地 upload 卷
-- **域名**：小程序要求 https + 备案域名 + 后台白名单（详见 `docs/小程序端说明.md`）
+这些都需要外部资质或第三方账号，仓库里只留了接口与占位：
+
+- **真实支付**：微信 / 支付宝 SDK + 商户号 + 回调验签（当前 `/shop/pay/mock` 模拟直通，回调接口已按签名结构预留）
+- **小程序登录**：`wx.login` → `code2Session` 换 openid（当前手机号 + 密码）
+- **短信验证码**：注册与找回密码
+- **对象存储**：OSS / COS 替换本地 upload 卷
+- **域名与备案**：小程序要求 https + 已备案域名 + 后台白名单
+- **自动化测试**：目前只有端到端冒烟脚本，缺单元测试与 CI 流水线
+
+## 免责声明
+
+- 本项目为**学习与技术演示**用途；业务功能范围参考了公开电商产品的功能地图，**代码与素材均自行实现**，不包含第三方授权代码。
+- 仓库内的账号口令、JWT 密钥均为**本地演示默认值**，公网部署前请务必修改（见 `.env.example`）。
+- 演示商品图片来自公开图库，仅用于展示。
+
+## License
+
+[MIT](LICENSE)
